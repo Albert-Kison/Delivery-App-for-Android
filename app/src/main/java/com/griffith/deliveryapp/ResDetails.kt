@@ -1,46 +1,191 @@
 package com.griffith.deliveryapp
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
+import androidx.compose.ui.Alignment
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.absoluteOffset
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.sharp.Add
+import androidx.compose.material.icons.twotone.Add
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.griffith.deliveryapp.ui.theme.DeliveryAppTheme
 
 class ResDetails : ComponentActivity() {
+    private val basket: Basket = Basket.getInstance()
+    private var itemCount = mutableStateOf(basket.getItems().size)
+    private val startBasketActivityForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            // Retrieve the updated item count from the basket
+            val itemCount = Basket.getInstance().getItems().size
+            this.itemCount.value = itemCount
+            // Update your UI here if necessary
+        }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            @Suppress("DEPRECATION")
+            val menu: List<HashMap<String, Any>> = intent.getSerializableExtra("menu") as List<HashMap<String, Any>>
+
             DeliveryAppTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting2("Res")
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        LazyColumn (
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            item {
+                                Column(
+                                    modifier = Modifier.padding(16.dp)
+                                ) {
+                                    Text(
+                                        text = "Menu",
+                                        fontSize = 24.sp,
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    for (item in menu) {
+                                        ItemCard(item=item, onClick = {
+                                            basket.addItem(item)
+                                            itemCount.value = basket.getItems().size
+                                            val returnIntent = Intent()
+                                            setResult(Activity.RESULT_OK, returnIntent)
+                                        })
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                    }
+                                }
+                            }
+                        }
+//                        Spacer(modifier = Modifier.height(16.dp))
+                        if (itemCount.value > 0) {
+                            ViewBasketButton(itemCount = itemCount.value, total = basket.getTotal(), startBasketActivityForResult)
+                        }
+                    }
+
                 }
             }
         }
     }
 }
 
-@Composable
-fun Greeting2(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+//@Composable
+//fun ViewBasketButton(itemCount: Int) {
+//    Box(
+//        contentAlignment = Alignment.BottomCenter,
+//        modifier = Modifier
+//            .background(Color.Green)
+//            .fillMaxWidth()
+//    ) {
+//        Text(
+//            text = itemCount.toString(),
+//            fontSize = 20.sp,
+//            modifier = Modifier.padding(16.dp)
+//        )
+//    }
+//}
 
-@Preview(showBackground = true)
 @Composable
-fun GreetingPreview2() {
-    DeliveryAppTheme {
-        Greeting2("Android")
+fun ItemCard(item: HashMap<String, Any>, onClick: () -> Unit) {
+    Card (
+        elevation = CardDefaults.cardElevation(3.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier
+                    .weight(2f)
+                    .height(100.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = item["foodName"] as String ?: "Menu Item", fontWeight = FontWeight.SemiBold, fontSize = 20.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(text = item["foodDescription"] as String ?: "Description", maxLines = 2, fontSize = 16.sp, overflow = TextOverflow.Ellipsis, style = TextStyle(lineHeight = 18.sp))
+                Text(text = (item["foodPrice"].toString() + "€") ?: "Price")
+            }
+            Spacer(modifier = Modifier.width(10.dp))
+            Row(
+//                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(item["foodImg"] as Int ?: R.drawable.default_image),
+                    contentDescription = item["foodName"] as String ?: "Menu Item", // decorative
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .height(100.dp)
+                        .width(100.dp)
+                        .clip(RoundedCornerShape(5.dp))
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                FloatingActionButton(
+                    onClick = onClick,
+                    modifier = Modifier.height(100.dp).border(1.dp, Color.LightGray, RoundedCornerShape(5)),
+                    shape = RoundedCornerShape(5),
+                    containerColor = Color.Transparent, // Transparent background
+                    contentColor = Color(238, 150, 75), // Color of the icon
+                    elevation = FloatingActionButtonDefaults.elevation( // Set elevation to zero
+                        defaultElevation = 0.dp,
+                        pressedElevation = 0.dp,
+                        hoveredElevation = 0.dp,
+                        focusedElevation = 0.dp
+                    )
+                ) {
+                    Icon(Icons.Filled.Add, "Add")
+                }
+            }
+
+        }
     }
 }

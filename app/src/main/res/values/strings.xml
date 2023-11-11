@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">DeliveryApp</string>
     <string name="title_activity_res_details">ResDetails</string>
+    <string name="title_activity_basket">BasketActivity</string>
 </resources>
