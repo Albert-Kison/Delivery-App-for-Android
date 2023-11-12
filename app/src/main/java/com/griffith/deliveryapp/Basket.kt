@@ -1,6 +1,8 @@
 package com.griffith.deliveryapp
 
 class Basket private constructor() {
+
+    // items in the basket
     private val items: MutableList<HashMap<String, Any>> = mutableListOf()
 
     fun addItem(item: HashMap<String, Any>) {

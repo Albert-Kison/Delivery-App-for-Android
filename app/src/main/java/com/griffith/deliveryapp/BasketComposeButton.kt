@@ -24,15 +24,21 @@ import androidx.core.content.ContextCompat.startActivity
 import java.math.BigDecimal
 import java.math.RoundingMode
 
+
+// the "View basket" button
+// if clicked, to the basket
+// this button has a fixed position and is always at the bottom
 @Composable
 fun ViewBasketButton(itemCount: Int, total: Double, startBasketActivityForResult: ActivityResultLauncher<Intent>) {
     val context = LocalContext.current // Get the current context
+
     Box(
         contentAlignment = Alignment.BottomCenter,
         modifier = Modifier
             .background(Color(238, 150, 75))
             .fillMaxWidth()
             .clickable {
+                // go to the BasketActivity
                 val intent = Intent(context, BasketActivity::class.java) // Create the intent
                 startBasketActivityForResult.launch(intent)
             }
@@ -47,6 +53,8 @@ fun ViewBasketButton(itemCount: Int, total: Double, startBasketActivityForResult
                 modifier = Modifier
                     .align(Alignment.CenterStart)
             ) {
+
+                // the item count text
                 Text(
                     text = itemCount.toString(),
                     fontSize = 20.sp,
@@ -54,18 +62,23 @@ fun ViewBasketButton(itemCount: Int, total: Double, startBasketActivityForResult
                     color = Color.White
                 )
             }
+
+            // the "View Basket" text (always in the center)
             Text(
-                text = "View Basket",
+                text = "View basket",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.White,
                 modifier = Modifier.align(Alignment.Center)
             )
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
             ) {
+
+                // the basket total text
                 Text(
                     text = "${BigDecimal(total).setScale(2, RoundingMode.HALF_EVEN).toDouble()}€",
                     fontSize = 20.sp,

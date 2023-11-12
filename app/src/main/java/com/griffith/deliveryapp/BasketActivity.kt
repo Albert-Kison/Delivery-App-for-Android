@@ -47,7 +47,11 @@ import java.util.Collections.addAll
 
 class BasketActivity : ComponentActivity() {
     private val basket: Basket = Basket.getInstance()
+
+    // number of items in the basket
     private var itemCount = mutableStateOf(basket.getItems().size)
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -58,6 +62,8 @@ class BasketActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+
+                    // if no items, display the message in the center
                     if (itemCount.value == 0) {
                         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                             Column(
@@ -68,6 +74,7 @@ class BasketActivity : ComponentActivity() {
                             }
                         }
                     } else {
+                        // column of the "Basket" text, items and the "Order now" button
                         Column(modifier = Modifier.fillMaxSize()) {
                             LazyColumn(
                                 modifier = Modifier.weight(1f)
@@ -76,15 +83,19 @@ class BasketActivity : ComponentActivity() {
                                     Column(
                                         modifier = Modifier.padding(16.dp)
                                     ) {
+
+                                        // "Basket" text
                                         Text(
                                             text = "Basket",
                                             fontSize = 24.sp,
                                             style = MaterialTheme.typography.titleLarge,
                                             fontWeight = FontWeight.SemiBold
                                         )
+
+                                        // the items
                                         BasketItems(basket, onItemRemoved = {
                                             itemCount.value = basket.getItems().size
-                                            // Set the result here
+                                            // save the result when an item is deleted
                                             val returnIntent = Intent().apply {
                                                 putExtra("itemCount", basket.getItems().size)
                                             }
@@ -94,7 +105,11 @@ class BasketActivity : ComponentActivity() {
                                 }
                             }
 
+                            // if the basket exists
                             if (itemCount.value > 0) {
+                                // the "Order now" button
+                                // if clicked, clear the basket and go to the starting screen
+                                // this button has a fixed position and is always at the bottom
                                 Box(
                                     contentAlignment = Alignment.BottomCenter,
                                     modifier = Modifier
@@ -125,13 +140,25 @@ class BasketActivity : ComponentActivity() {
 
 @Composable
 fun BasketItems(basket: Basket = Basket.getInstance(), onItemRemoved: () -> Unit) {
+
+    // to update the ui if an item is deleted
     val items = remember { mutableStateListOf<HashMap<String, Any>>().apply { addAll(basket.getItems()) } }
+
     for (item in items) {
         Row(verticalAlignment = Alignment.CenterVertically) {
+
+            // the item's name
             Text(("1x " + item["foodName"] as String) ?: "Menu Item", fontWeight = FontWeight.SemiBold, fontSize = 20.sp)
+
             Spacer(modifier = Modifier.weight(1f))
+
             Row(verticalAlignment = Alignment.CenterVertically) {
+
+                // the item's price
                 Text((item["foodPrice"].toString() + "€") ?: "Menu Item", fontSize = 20.sp)
+
+                // the delete button
+                // if clicked, delete the item and update the ui
                 FloatingActionButton(
                     modifier = Modifier.size(50.dp),
                     containerColor = Color.Transparent, // Transparent background
@@ -158,9 +185,13 @@ fun BasketItems(basket: Basket = Basket.getInstance(), onItemRemoved: () -> Unit
     Divider()
     Spacer(modifier = Modifier.height(20.dp))
 
+    // the total
     Row(verticalAlignment = Alignment.CenterVertically) {
+
+        // the "Total" text
         Text("Total", fontWeight = FontWeight.SemiBold, fontSize = 20.sp)
         Spacer(modifier = Modifier.weight(1f))
+        // the total amount
         Text("${BigDecimal(basket.getTotal()).setScale(2, RoundingMode.HALF_EVEN).toDouble()}€", fontSize = 20.sp)
     }
 }

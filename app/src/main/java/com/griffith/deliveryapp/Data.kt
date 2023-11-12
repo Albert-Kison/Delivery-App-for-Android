@@ -1,5 +1,6 @@
 package com.griffith.deliveryapp
 
+// this is the data of restaurants used by the app
 val data = listOf(
     hashMapOf(
         "name" to "Bleeding Horse",

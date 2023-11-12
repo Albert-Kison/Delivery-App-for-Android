@@ -7,7 +7,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -47,24 +46,25 @@ import androidx.compose.ui.unit.sp
 import com.griffith.deliveryapp.ui.theme.DeliveryAppTheme
 import java.io.Serializable
 
-var enteredText = mutableStateOf("")
+// text used to search for restaurants (not implemented yet)
+var searchText = mutableStateOf("")
+
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     private val basket: Basket = Basket.getInstance()
+
+    // number of items in the basket
     private var itemCount = mutableStateOf(basket.getItems().size)
-    private val someActivityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            itemCount.value = basket.getItems().size
-        }
-    }
-    private val startBasketActivityForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+
+    // save the itemCount if modified in another activity
+    private val startActivityForItemCountResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             // Retrieve the updated item count from the basket
             val itemCount = Basket.getInstance().getItems().size
             this.itemCount.value = itemCount
-            // Update your UI here if necessary
         }
     }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,9 +77,10 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    // Column of the search text field, the restaurants cards, and the "View basket" button
                     Column(modifier = Modifier.fillMaxSize()) {
-                        TextField(value = enteredText.value,
-                            onValueChange = { enteredText.value = it},
+                        TextField(value = searchText.value,
+                            onValueChange = { searchText.value = it},
                             textStyle = TextStyle(fontSize = 24.sp),
                             singleLine = true,
                             shape = RoundedCornerShape(5),
@@ -98,13 +99,14 @@ class MainActivity : ComponentActivity() {
                                 textColor = Color.Black,
                                 cursorColor = Color.Black,
                                 unfocusedLeadingIconColor = Color.Gray,
-//                                backgroundColor = Color.Transparent,
                                 unfocusedIndicatorColor = Color.Transparent, // This removes the bottom border
                                 focusedIndicatorColor = Color.Transparent // This removes the bottom border when focused as well
                             ),
                             keyboardActions = KeyboardActions.Default,
                             modifier = Modifier.padding(16.dp, 16.dp, 16.dp, 0.dp).fillMaxWidth()
                         )
+
+                        // scrollable column of the restaurants' cards
                         LazyColumn (
                             modifier = Modifier.weight(1f)
                         ) {
@@ -112,18 +114,22 @@ class MainActivity : ComponentActivity() {
                                 Column (modifier = Modifier.padding(16.dp)) {
                                     for (res in data) {
                                         ResCard(res=res, onClick = {
+                                            // when clicked, go to the restaurant's menu (ResDetails)
                                             val intent = Intent(context, ResDetails::class.java)
+                                            // put the restaurant's menu data
                                             intent.putExtra("menu", res["menu"] as? Serializable)
-                                            someActivityResultLauncher.launch(intent)
+                                            startActivityForItemCountResult.launch(intent)
                                         })
                                         Spacer(modifier = Modifier.height(16.dp))
                                     }
                                 }
                             }
                         }
-//                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // if the basket exists
                         if (itemCount.value > 0) {
-                            ViewBasketButton(itemCount = itemCount.value, total = basket.getTotal(), startBasketActivityForResult)
+                            // this button has a fixed position and is always at the bottom
+                            ViewBasketButton(itemCount = itemCount.value, total = basket.getTotal(), startActivityForItemCountResult)
                         }
                     }
                     
@@ -135,21 +141,15 @@ class MainActivity : ComponentActivity() {
 
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Composable
 fun ResCard(res: Map<String, Any>, onClick: () -> Unit) {
+    // the card has elevation and is clickable
     Card (
         elevation = CardDefaults.cardElevation(3.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         modifier = Modifier.clickable { onClick() }
     ) {
         Column {
+            // image of the restaurant
             Image(
                 painter = painterResource(res["img"] as Int ?: R.drawable.default_image),
                 contentDescription = res["name"] as String ?: "Restaurant", // decorative
@@ -158,15 +158,18 @@ fun ResCard(res: Map<String, Any>, onClick: () -> Unit) {
                     .height(150.dp)
                     .fillMaxWidth()
             )
-//                                    Spacer(modifier = Modifier.height(4.dp))
 
             Column (modifier = Modifier.padding(16.dp, 10.dp, 16.dp, 10.dp)) {
+
+                // name of the restaurant
                 Text(
                     text = res["name"] as String ?: "Restaurant",
                     fontSize =  24.sp,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold
                 )
+
+                // rating of the restaurant
                 Row (verticalAlignment = Alignment.CenterVertically) {
                     Image(painter = painterResource(id = R.drawable.star), contentDescription = "rating")
                     var rating = ""
@@ -179,17 +182,13 @@ fun ResCard(res: Map<String, Any>, onClick: () -> Unit) {
                     } else rating = "Very good"
                     Text(text = rating + " (" + res["reviewsNumber"].toString() + "+)", color = Color.Gray)
                 }
+
+                // delivery time of the restaurant (so far just a placeholder)
                 Text(text = "Delivery time 30-45 minutes", color = Color.Gray)
+
+                // distance away of the restaurant (so far just a placeholder)
                 Text(text = "2.3 km", color = Color.Gray)
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    DeliveryAppTheme {
-        Greeting("Android")
     }
 }

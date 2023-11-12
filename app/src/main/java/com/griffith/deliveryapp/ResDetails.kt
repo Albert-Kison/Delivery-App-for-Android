@@ -59,18 +59,25 @@ import com.griffith.deliveryapp.ui.theme.DeliveryAppTheme
 
 class ResDetails : ComponentActivity() {
     private val basket: Basket = Basket.getInstance()
+
+    // number of items in the basket
     private var itemCount = mutableStateOf(basket.getItems().size)
+
+    // save the itemCount if modified in another activity
     private val startBasketActivityForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             // Retrieve the updated item count from the basket
             val itemCount = Basket.getInstance().getItems().size
             this.itemCount.value = itemCount
-            // Update your UI here if necessary
         }
     }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+
+            // parse the menu data
             @Suppress("DEPRECATION")
             val menu: List<HashMap<String, Any>> = intent.getSerializableExtra("menu") as List<HashMap<String, Any>>
 
@@ -80,6 +87,8 @@ class ResDetails : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+
+                    // column of the "Menu" text, menu items, and the "View basket" button
                     Column(modifier = Modifier.fillMaxSize()) {
                         LazyColumn (
                             modifier = Modifier.weight(1f)
@@ -88,14 +97,20 @@ class ResDetails : ComponentActivity() {
                                 Column(
                                     modifier = Modifier.padding(16.dp)
                                 ) {
+
+                                    // the "Menu" text
                                     Text(
                                         text = "Menu",
                                         fontSize = 24.sp,
                                         style = MaterialTheme.typography.titleLarge,
                                         fontWeight = FontWeight.SemiBold
                                     )
+
+                                    // the menu items
                                     for (item in menu) {
                                         ItemCard(item=item, onClick = {
+                                            // if clicked, add to the basket and
+                                            // update the itemCount
                                             basket.addItem(item)
                                             itemCount.value = basket.getItems().size
                                             val returnIntent = Intent()
@@ -106,8 +121,10 @@ class ResDetails : ComponentActivity() {
                                 }
                             }
                         }
-//                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // if the basket exists
                         if (itemCount.value > 0) {
+                            // this button has a fixed position and is always at the bottom
                             ViewBasketButton(itemCount = itemCount.value, total = basket.getTotal(), startBasketActivityForResult)
                         }
                     }
@@ -118,24 +135,10 @@ class ResDetails : ComponentActivity() {
     }
 }
 
-//@Composable
-//fun ViewBasketButton(itemCount: Int) {
-//    Box(
-//        contentAlignment = Alignment.BottomCenter,
-//        modifier = Modifier
-//            .background(Color.Green)
-//            .fillMaxWidth()
-//    ) {
-//        Text(
-//            text = itemCount.toString(),
-//            fontSize = 20.sp,
-//            modifier = Modifier.padding(16.dp)
-//        )
-//    }
-//}
 
 @Composable
 fun ItemCard(item: HashMap<String, Any>, onClick: () -> Unit) {
+    // menu item
     Card (
         elevation = CardDefaults.cardElevation(3.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
@@ -150,25 +153,37 @@ fun ItemCard(item: HashMap<String, Any>, onClick: () -> Unit) {
                     .height(100.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
+                // the item's name
                 Text(text = item["foodName"] as String ?: "Menu Item", fontWeight = FontWeight.SemiBold, fontSize = 20.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+
+                // the item's description
                 Text(text = item["foodDescription"] as String ?: "Description", maxLines = 2, fontSize = 16.sp, overflow = TextOverflow.Ellipsis, style = TextStyle(lineHeight = 18.sp))
+
+                // the item's price
                 Text(text = (item["foodPrice"].toString() + "€") ?: "Price")
             }
+
             Spacer(modifier = Modifier.width(10.dp))
+
             Row(
-//                modifier = Modifier.padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+
+                // the item's image
                 Image(
                     painter = painterResource(item["foodImg"] as Int ?: R.drawable.default_image),
-                    contentDescription = item["foodName"] as String ?: "Menu Item", // decorative
+                    contentDescription = item["foodName"] as String ?: "Menu Item",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .height(100.dp)
                         .width(100.dp)
                         .clip(RoundedCornerShape(5.dp))
                 )
+
                 Spacer(modifier = Modifier.width(10.dp))
+
+                // the "Add" button
+                // if clicked, add the item to the basket
                 FloatingActionButton(
                     onClick = onClick,
                     modifier = Modifier.height(100.dp).border(1.dp, Color.LightGray, RoundedCornerShape(5)),
