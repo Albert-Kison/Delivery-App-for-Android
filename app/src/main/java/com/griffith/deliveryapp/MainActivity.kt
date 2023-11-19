@@ -43,6 +43,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.griffith.deliveryapp.ui.theme.DeliveryAppTheme
 import java.io.Serializable
 
@@ -65,9 +69,32 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val MY_PERMISSIONS_REQUEST_LOCATION = 123
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // Permission is not granted, request it
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ),
+                MY_PERMISSIONS_REQUEST_LOCATION
+            )
+        } else {
+            // Permission already granted
+            // Proceed with your GPS-related code
+            // For example, you might initialize your location-related functionality here
+            initializeLocation()
+        }
+
         setContent {
             val context = LocalContext.current
 
@@ -133,6 +160,29 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                     
+                }
+            }
+        }
+    }
+
+    private fun initializeLocation() {
+        // Your code to initialize location-related functionality goes here
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        when (requestCode) {
+            MY_PERMISSIONS_REQUEST_LOCATION -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // Permission granted, proceed with GPS-related code
+                    initializeLocation()
+                } else {
+                    // Permission denied, handle accordingly (e.g., show a message to the user)
                 }
             }
         }
