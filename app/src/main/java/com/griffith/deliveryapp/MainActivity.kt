@@ -1,7 +1,13 @@
 package com.griffith.deliveryapp
 
+import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -40,18 +46,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import android.Manifest
-import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.android.gms.location.LocationServices
 import com.griffith.deliveryapp.ui.theme.DeliveryAppTheme
 import java.io.Serializable
 
+
 // text used to search for restaurants (not implemented yet)
 var searchText = mutableStateOf("")
+var latitude = mutableStateOf(0.0)
+var longitude = mutableStateOf(0.0)
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
@@ -70,30 +77,13 @@ class MainActivity : ComponentActivity() {
     }
 
     private val MY_PERMISSIONS_REQUEST_LOCATION = 123
+    private val locationPermissionCode = 2
+    private lateinit var locationManager: LocationManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            // Permission is not granted, request it
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                ),
-                MY_PERMISSIONS_REQUEST_LOCATION
-            )
-        } else {
-            // Permission already granted
-            // Proceed with your GPS-related code
-            // For example, you might initialize your location-related functionality here
-            initializeLocation()
-        }
+        initializeLocation()
 
         setContent {
             val context = LocalContext.current
@@ -130,8 +120,12 @@ class MainActivity : ComponentActivity() {
                                 focusedIndicatorColor = Color.Transparent // This removes the bottom border when focused as well
                             ),
                             keyboardActions = KeyboardActions.Default,
-                            modifier = Modifier.padding(16.dp, 16.dp, 16.dp, 0.dp).fillMaxWidth()
+                            modifier = Modifier
+                                .padding(16.dp, 16.dp, 16.dp, 0.dp)
+                                .fillMaxWidth()
                         )
+                        Text(text = latitude.value.toString())
+                        Text(text = longitude.value.toString())
 
                         // scrollable column of the restaurants' cards
                         LazyColumn (
@@ -167,6 +161,41 @@ class MainActivity : ComponentActivity() {
 
     private fun initializeLocation() {
         // Your code to initialize location-related functionality goes here
+        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ),
+                MY_PERMISSIONS_REQUEST_LOCATION
+            )
+            return
+        }
+        fusedLocationClient.lastLocation
+            .addOnSuccessListener { location: Location? ->
+                // Got last known location. In some rare situations, this can be null.
+                if (location != null) {
+                    // Handle location
+                    latitude.value = location.latitude
+                    longitude.value = location.longitude
+                    // Do something with the latitude and longitude
+                } else {
+                    // Handle the case where the last known location is null
+                }
+            }
+            .addOnFailureListener { e ->
+                // Handle failure to get location
+            }
     }
 
     override fun onRequestPermissionsResult(
