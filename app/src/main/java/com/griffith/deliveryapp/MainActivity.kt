@@ -1,6 +1,7 @@
 package com.griffith.deliveryapp
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -9,10 +10,12 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,10 +29,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -50,6 +57,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.android.gms.common.api.GoogleApi.Settings
+import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.griffith.deliveryapp.ui.theme.DeliveryAppTheme
 import java.io.Serializable
@@ -96,6 +105,30 @@ class MainActivity : ComponentActivity() {
                 ) {
                     // Column of the search text field, the restaurants cards, and the "View basket" button
                     Column(modifier = Modifier.fillMaxSize()) {
+                        Row (verticalAlignment = Alignment.CenterVertically) {
+                            Text(text = "Hello", modifier = Modifier.padding(16.dp, 0.dp, 0.dp, 0.dp))
+                            Spacer(modifier = Modifier.weight(1f))
+                            FloatingActionButton(
+                                modifier = Modifier.height(50.dp),
+//                                shape = RoundedCornerShape(5),
+                                containerColor = Color.Transparent, // Transparent background
+                                contentColor = Color(238, 150, 75), // Color of the icon
+                                elevation = FloatingActionButtonDefaults.elevation( // Set elevation to zero
+                                    defaultElevation = 0.dp,
+                                    pressedElevation = 0.dp,
+                                    hoveredElevation = 0.dp,
+                                    focusedElevation = 0.dp
+                                ),
+                                onClick = {
+                                    val intent = Intent(context, SettingsActivity::class.java)
+                                    startActivity(intent)
+                                },
+                            ) {
+                                Icon(Icons.Filled.Settings, "Add")
+                            }
+                        }
+                        
+                        
                         TextField(value = searchText.value,
                             onValueChange = { searchText.value = it},
                             textStyle = TextStyle(fontSize = 24.sp),
@@ -121,7 +154,7 @@ class MainActivity : ComponentActivity() {
                             ),
                             keyboardActions = KeyboardActions.Default,
                             modifier = Modifier
-                                .padding(16.dp, 16.dp, 16.dp, 0.dp)
+                                .padding(16.dp, 0.dp, 16.dp, 0.dp)
                                 .fillMaxWidth()
                         )
                         Text(text = latitude.value.toString())
@@ -157,7 +190,9 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
     }
+
 
     private fun initializeLocation() {
         // Your code to initialize location-related functionality goes here

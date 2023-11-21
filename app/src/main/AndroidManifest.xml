@@ -16,6 +16,16 @@
         android:theme="@style/Theme.DeliveryApp"
         tools:targetApi="31">
         <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="@string/title_activity_settings"
+            android:theme="@style/Theme.AppCompat.Light" />
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyD_zCaZM9E5OTvWc_xxG7KsRQRLAJzrjFA" />
+
+        <activity
             android:name=".BasketActivity"
             android:exported="false"
             android:label="@string/title_activity_basket"
