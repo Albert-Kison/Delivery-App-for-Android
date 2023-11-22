@@ -118,6 +118,7 @@ class BasketActivity : ComponentActivity() {
                                         .clickable {
                                             basket.clearItems()
                                             val intent = Intent(context, MainActivity::class.java) // Create the intent
+                                            intent.putExtra("skipLocationInitialization", true)
                                             startActivity(intent)
                                         }
                                 ) {

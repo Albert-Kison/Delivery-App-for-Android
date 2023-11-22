@@ -7,6 +7,8 @@ val data = listOf(
         "rating" to 4.5,
         "reviewsNumber" to "500",
         "img" to R.drawable.bleeding_horse,
+        "latitude" to 37.409099,
+        "longitude" to -122.117197,
         "menu" to listOf(
             hashMapOf(
                 "foodName" to "Burger",
@@ -33,6 +35,8 @@ val data = listOf(
         "rating" to 4.8,
         "reviewsNumber" to "1000",
         "img" to R.drawable.mcdonalds,
+        "latitude" to 37.379293,
+        "longitude" to -122.042236,
         "menu" to listOf(
             hashMapOf(
                 "foodName" to "Big Mac",
@@ -59,6 +63,8 @@ val data = listOf(
         "rating" to 3.8,
         "reviewsNumber" to "800",
         "img" to R.drawable.dominos_pizza,
+        "latitude" to 37.787465,
+        "longitude" to -122.412450,
         "menu" to listOf(
             hashMapOf(
                 "foodName" to "Pepperoni",

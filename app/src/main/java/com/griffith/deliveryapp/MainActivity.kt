@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.location.LocationRequest
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -70,6 +71,8 @@ var searchText = mutableStateOf("")
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     private val basket: Basket = Basket.getInstance()
+
+    private var isLocationInitialized = false
     private val coordinates: Coordinates = Coordinates.getInstance()
 
     // number of items in the basket
@@ -105,7 +108,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        initializeLocation()
+        // Check if the intent contains the flag to skip location initialization
+        val skipLocationInitialization = intent?.getBooleanExtra("skipLocationInitialization", false) ?: false
+
+        if (!isLocationInitialized && !skipLocationInitialization) {
+            initializeLocation()
+        }
 
         setContent {
             val context = LocalContext.current
@@ -209,6 +217,14 @@ class MainActivity : ComponentActivity() {
 
     }
 
+
+    override fun onResume() {
+        super.onResume()
+
+        // Call your method to update the location and filter restaurants
+        filterRestaurantsBasedOnCoordinates(coordinates)
+    }
+
     private fun searchRestaurants(query: String) {
         restaurantList.value = if (query.isBlank()) {
             data // If the query is blank, show the original list
@@ -219,6 +235,36 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+
+    fun calculateDistance(
+        userLatitude: Double,
+        userLongitude: Double,
+        restaurantLatitude: Double,
+        restaurantLongitude: Double
+    ): Float {
+        val results = FloatArray(1)
+        Location.distanceBetween(userLatitude, userLongitude, restaurantLatitude, restaurantLongitude, results)
+        return results[0]
+    }
+
+
+    fun filterRestaurantsBasedOnCoordinates(coordinates: Coordinates) {
+        // Filter restaurants based on distance
+        restaurantList.value = data.filter { res ->
+            val restaurantLatitude = res["latitude"] as Double
+            val restaurantLongitude = res["longitude"] as Double
+            val distance = calculateDistance(
+                coordinates.getLatitude(),
+                coordinates.getLongitude(),
+                restaurantLatitude,
+                restaurantLongitude
+            )
+            // Filter restaurants within a 30 km radius
+            distance <= 30000.0
+        }
+    }
+
 
 
     private fun initializeLocation() {
@@ -253,7 +299,11 @@ class MainActivity : ComponentActivity() {
                     // Handle location
                     coordinates.setLatitude(location.latitude)
                     coordinates.setLongitude(location.longitude)
-                    // Do something with the latitude and longitude
+
+                    isLocationInitialized = true
+
+                    // Filter restaurants based on distance
+                    filterRestaurantsBasedOnCoordinates(coordinates)
                 } else {
                     // Handle the case where the last known location is null
                 }
