@@ -75,6 +75,8 @@ class MainActivity : ComponentActivity() {
     // number of items in the basket
     private val itemCount = mutableStateOf(basket.getItems().size)
 
+    private val restaurantList = mutableStateOf(data)
+
     private val username = mutableStateOf("")
     private val startSettingsActivityForResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -99,8 +101,6 @@ class MainActivity : ComponentActivity() {
     }
 
     private val MY_PERMISSIONS_REQUEST_LOCATION = 123
-    private val locationPermissionCode = 2
-    private lateinit var locationManager: LocationManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -144,7 +144,10 @@ class MainActivity : ComponentActivity() {
                         
                         
                         TextField(value = searchText.value,
-                            onValueChange = { searchText.value = it},
+                            onValueChange = {
+                                searchText.value = it
+                                searchRestaurants(it)
+                                            },
                             textStyle = TextStyle(fontSize = 24.sp),
                             singleLine = true,
                             shape = RoundedCornerShape(5),
@@ -156,7 +159,6 @@ class MainActivity : ComponentActivity() {
                                     Icons.Filled.Search,
                                     contentDescription = "Visibility Icon",
                                     modifier = Modifier.size(24.dp),
-//                                    tint = Color(244, 211, 94)
                                 )
                             },
                             colors = TextFieldDefaults.textFieldColors( // Custom colors and removing bottom border
@@ -180,7 +182,7 @@ class MainActivity : ComponentActivity() {
                         ) {
                             item {
                                 Column (modifier = Modifier.padding(16.dp)) {
-                                    for (res in data) {
+                                    for (res in restaurantList.value) {
                                         ResCard(res=res, onClick = {
                                             // when clicked, go to the restaurant's menu (ResDetails)
                                             val intent = Intent(context, ResDetails::class.java)
@@ -205,6 +207,17 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+    }
+
+    private fun searchRestaurants(query: String) {
+        restaurantList.value = if (query.isBlank()) {
+            data // If the query is blank, show the original list
+        } else {
+            // Filter the list based on the search query
+            data.filter { res ->
+                (res["name"] as? String)?.contains(query, ignoreCase = true) == true
+            }
+        }
     }
 
 

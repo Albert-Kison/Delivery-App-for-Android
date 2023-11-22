@@ -24,6 +24,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -47,14 +48,7 @@ import com.griffith.deliveryapp.ui.theme.DeliveryAppTheme
 @OptIn(ExperimentalMaterial3Api::class)
 class SettingsActivity : ComponentActivity() {
 
-//    private lateinit var mMap: GoogleMap
     private val coordinates: Coordinates = Coordinates.getInstance()
-
-//
-//    init {
-//        // Set the initial value of usernameText to the received username
-//        usernameText.value = currentUsername
-//    }
 
     private val currentLocation = LatLng(coordinates.getLatitude(), coordinates.getLongitude())
     private val currentLocationState = mutableStateOf(MarkerState(position = currentLocation))
@@ -68,13 +62,6 @@ class SettingsActivity : ComponentActivity() {
         }
         val usernameText = mutableStateOf(currentUsername)
 
-
-//        setContentView(R.layout.activity_maps)
-
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-//        val mapFragment = supportFragmentManager
-//            .findFragmentById(R.id.map) as SupportMapFragment
-//        mapFragment.getMapAsync(this)
 
         setContent {
             val context = LocalContext.current
@@ -139,30 +126,6 @@ class SettingsActivity : ComponentActivity() {
                 }
             }
 
-
-//            DeliveryAppTheme {
-//                // A surface container using the 'background' color from the theme
-//                Surface(
-//                    modifier = Modifier.fillMaxSize(),
-//                    color = MaterialTheme.colorScheme.background
-//                ) {
-//                    Column {
-//                        Text(text = "Hello")
-//                    }
-//                }
-//            }
         }
     }
-
-//    override fun onMapReady(googleMap: GoogleMap) {
-//        mMap = googleMap
-//        // Add a marker in Sydney and move the camera
-//        val sydney = LatLng(-34.0, 151.0)
-//        mMap.addMarker(
-//            MarkerOptions()
-//            .position(sydney)
-//            .title("Marker in Sydney"))
-//        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
-//    }
-
 }
