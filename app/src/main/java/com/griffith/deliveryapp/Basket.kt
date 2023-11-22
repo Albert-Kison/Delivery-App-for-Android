@@ -5,12 +5,25 @@ class Basket private constructor() {
     // items in the basket
     private val items: MutableList<HashMap<String, Any>> = mutableListOf()
 
-    fun addItem(item: HashMap<String, Any>) {
-        items.add(item)
+    private var currentRestaurantId: String? = null
+
+    fun addItem(item: HashMap<String, Any>, restaurantId: String): Boolean {
+        if (currentRestaurantId == null || currentRestaurantId == restaurantId) {
+            items.add(item)
+            currentRestaurantId = restaurantId
+            return true
+        } else {
+            // If the item is from a different restaurant, return false
+            return false
+        }
     }
+
 
     fun removeItem(item: HashMap<String, Any>) {
         items.remove(item)
+        if (items.size == 0) {
+            currentRestaurantId = null
+        }
     }
 
     fun getItems(): List<HashMap<String, Any>> {
@@ -25,8 +38,13 @@ class Basket private constructor() {
         return total
     }
 
-    fun clearItems() {
+    fun clearBasket() {
+        currentRestaurantId = null
         items.clear() // This removes all items from the list
+    }
+
+    fun setCurrentRestaurantId(restaurantId: String) {
+        currentRestaurantId = restaurantId
     }
 
     companion object {

@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Divider
 import androidx.compose.material3.FloatingActionButton
@@ -37,13 +36,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.griffith.deliveryapp.ui.theme.DeliveryAppTheme
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.util.Collections.addAll
 
 class BasketActivity : ComponentActivity() {
     private val basket: Basket = Basket.getInstance()
@@ -70,7 +68,7 @@ class BasketActivity : ComponentActivity() {
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center
                             ) {
-                                Text(text = "The basket is empty", fontSize = 24.sp)
+                                Text(text = "The basket is empty", fontSize = 24.sp, textAlign = TextAlign.Center)
                             }
                         }
                     } else {
@@ -116,7 +114,7 @@ class BasketActivity : ComponentActivity() {
                                         .background(Color(238, 150, 75))
                                         .fillMaxWidth()
                                         .clickable {
-                                            basket.clearItems()
+                                            basket.clearBasket()
                                             val intent = Intent(context, MainActivity::class.java) // Create the intent
                                             intent.putExtra("skipLocationInitialization", true)
                                             startActivity(intent)

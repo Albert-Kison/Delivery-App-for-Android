@@ -3,6 +3,7 @@ package com.griffith.deliveryapp
 // this is the data of restaurants used by the app
 val data = listOf(
     hashMapOf(
+        "id" to "1",
         "name" to "Bleeding Horse",
         "rating" to 4.5,
         "reviewsNumber" to "500",
@@ -31,6 +32,7 @@ val data = listOf(
         )
     ),
     hashMapOf(
+        "id" to "2",
         "name" to "McDonalds",
         "rating" to 4.8,
         "reviewsNumber" to "1000",
@@ -59,6 +61,7 @@ val data = listOf(
         )
     ),
     hashMapOf(
+        "id" to "3",
         "name" to "Domino's Pizza",
         "rating" to 3.8,
         "reviewsNumber" to "800",

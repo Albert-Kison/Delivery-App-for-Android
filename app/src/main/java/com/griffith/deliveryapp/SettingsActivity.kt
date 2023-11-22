@@ -47,6 +47,7 @@ import com.griffith.deliveryapp.ui.theme.DeliveryAppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 class SettingsActivity : ComponentActivity() {
+    private val basket: Basket = Basket.getInstance()
 
     private val coordinates: Coordinates = Coordinates.getInstance()
 
@@ -107,6 +108,7 @@ class SettingsActivity : ComponentActivity() {
                     onMapClick = ({
                         coordinates.setLatitude(it.latitude)
                         coordinates.setLongitude(it.longitude)
+
                         currentLocationState.value = MarkerState(position = it)
                     })
                 ) {

@@ -18,6 +18,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -54,6 +56,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
@@ -184,22 +187,37 @@ class MainActivity : ComponentActivity() {
                         Text(text = coordinates.getLatitude().toString())
                         Text(text = coordinates.getLongitude().toString())
 
-                        // scrollable column of the restaurants' cards
-                        LazyColumn (
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            item {
-                                Column (modifier = Modifier.padding(16.dp)) {
-                                    for (res in restaurantList.value) {
-                                        ResCard(res=res, onClick = {
-                                            // when clicked, go to the restaurant's menu (ResDetails)
-                                            val intent = Intent(context, ResDetails::class.java)
-                                            // put the restaurant's menu data
-                                            intent.putExtra("menu", res["menu"] as? Serializable)
-                                            startActivityForItemCountResult.launch(intent)
-                                        })
-                                        Spacer(modifier = Modifier.height(16.dp))
+                        if (restaurantList.value.size > 0) {
+                            // scrollable column of the restaurants' cards
+                            LazyColumn(
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                item {
+                                    Column(modifier = Modifier.padding(16.dp)) {
+                                        for (res in restaurantList.value) {
+                                            ResCard(res = res, onClick = {
+                                                // when clicked, go to the restaurant's menu (ResDetails)
+                                                val intent = Intent(context, ResDetails::class.java)
+                                                // put the restaurant's menu data
+                                                intent.putExtra(
+                                                    "menu",
+                                                    res["menu"] as? Serializable
+                                                )
+                                                intent.putExtra("restaurantId", res["id"] as? String)
+                                                startActivityForItemCountResult.launch(intent)
+                                            })
+                                            Spacer(modifier = Modifier.height(16.dp))
+                                        }
                                     }
+                                }
+                            }
+                        } else {
+                            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Text(text = "There no restaurants in your area", fontSize = 24.sp, textAlign = TextAlign.Center)
                                 }
                             }
                         }
@@ -207,7 +225,7 @@ class MainActivity : ComponentActivity() {
                         // if the basket exists
                         if (itemCount.value > 0) {
                             // this button has a fixed position and is always at the bottom
-                            ViewBasketButton(itemCount = itemCount.value, total = basket.getTotal(), startActivityForItemCountResult)
+                            ViewBasketButton(itemCount = basket.getItems().size, total = basket.getTotal(), startActivityForItemCountResult)
                         }
                     }
                     
