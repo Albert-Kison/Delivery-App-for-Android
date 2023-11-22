@@ -66,12 +66,11 @@ import java.io.Serializable
 
 // text used to search for restaurants (not implemented yet)
 var searchText = mutableStateOf("")
-var latitude = mutableStateOf(0.0)
-var longitude = mutableStateOf(0.0)
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     private val basket: Basket = Basket.getInstance()
+    private val coordinates: Coordinates = Coordinates.getInstance()
 
     // number of items in the basket
     private var itemCount = mutableStateOf(basket.getItems().size)
@@ -157,8 +156,8 @@ class MainActivity : ComponentActivity() {
                                 .padding(16.dp, 0.dp, 16.dp, 0.dp)
                                 .fillMaxWidth()
                         )
-                        Text(text = latitude.value.toString())
-                        Text(text = longitude.value.toString())
+                        Text(text = coordinates.getLatitude().toString())
+                        Text(text = coordinates.getLongitude().toString())
 
                         // scrollable column of the restaurants' cards
                         LazyColumn (
@@ -195,9 +194,10 @@ class MainActivity : ComponentActivity() {
 
 
     private fun initializeLocation() {
-        // Your code to initialize location-related functionality goes here
+        // api to get the location
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
+        // request the permission, executes when permission is not granted
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -216,13 +216,15 @@ class MainActivity : ComponentActivity() {
             )
             return
         }
+
+        // get the last known location
         fusedLocationClient.lastLocation
             .addOnSuccessListener { location: Location? ->
                 // Got last known location. In some rare situations, this can be null.
                 if (location != null) {
                     // Handle location
-                    latitude.value = location.latitude
-                    longitude.value = location.longitude
+                    coordinates.setLatitude(location.latitude)
+                    coordinates.setLongitude(location.longitude)
                     // Do something with the latitude and longitude
                 } else {
                     // Handle the case where the last known location is null
@@ -232,6 +234,7 @@ class MainActivity : ComponentActivity() {
                 // Handle failure to get location
             }
     }
+
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
