@@ -73,7 +73,21 @@ class MainActivity : ComponentActivity() {
     private val coordinates: Coordinates = Coordinates.getInstance()
 
     // number of items in the basket
-    private var itemCount = mutableStateOf(basket.getItems().size)
+    private val itemCount = mutableStateOf(basket.getItems().size)
+
+    private val username = mutableStateOf("")
+    private val startSettingsActivityForResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                // Retrieve the updated username from the intent
+                val newUsername =
+                    result.data?.getStringExtra("newUsername")
+                newUsername?.let {
+                    // Update the username in MainActivity
+                    username.value = it
+                }
+            }
+        }
 
     // save the itemCount if modified in another activity
     private val startActivityForItemCountResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -105,7 +119,7 @@ class MainActivity : ComponentActivity() {
                     // Column of the search text field, the restaurants cards, and the "View basket" button
                     Column(modifier = Modifier.fillMaxSize()) {
                         Row (verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "Hello", modifier = Modifier.padding(16.dp, 0.dp, 0.dp, 0.dp))
+                            Text(text = "Hello " + username.value, modifier = Modifier.padding(16.dp, 0.dp, 0.dp, 0.dp))
                             Spacer(modifier = Modifier.weight(1f))
                             FloatingActionButton(
                                 modifier = Modifier.height(50.dp),
@@ -120,7 +134,8 @@ class MainActivity : ComponentActivity() {
                                 ),
                                 onClick = {
                                     val intent = Intent(context, SettingsActivity::class.java)
-                                    startActivity(intent)
+                                    intent.putExtra("username", username.value)
+                                    startSettingsActivityForResult.launch(intent)
                                 },
                             ) {
                                 Icon(Icons.Filled.Settings, "Add")
