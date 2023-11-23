@@ -90,7 +90,7 @@ class MainActivity : ComponentActivity() {
 
     private val restaurantList = mutableStateOf(data)
 
-    private val username = mutableStateOf("")
+    private val username = mutableStateOf("Guest")
     private val startSettingsActivityForResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
@@ -187,7 +187,8 @@ class MainActivity : ComponentActivity() {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = "Hello " + username.value,
-                                modifier = Modifier.padding(16.dp, 0.dp, 0.dp, 0.dp)
+                                modifier = Modifier.padding(16.dp, 0.dp, 0.dp, 0.dp),
+                                fontSize = 20.sp
                             )
                             Spacer(modifier = Modifier.weight(1f))
                             FloatingActionButton(
@@ -207,7 +208,7 @@ class MainActivity : ComponentActivity() {
                                     startSettingsActivityForResult.launch(intent)
                                 },
                             ) {
-                                Icon(Icons.Filled.Settings, "Add")
+                                Icon(Icons.Filled.Settings, "Add", modifier = Modifier.size(30.dp))
                             }
                         }
 
@@ -507,11 +508,11 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    // delivery time of the restaurant
+                    // calculate delivery time of the restaurant
                     val deliveryTime = calculateDeliveryTime(coordinates.getLatitude(), coordinates.getLongitude(), res["latitude"] as Double, res["longitude"] as Double)
                     Text(text = "Delivery time $deliveryTime minutes", color = Color.Gray)
 
-                    // distance away of the restaurant (so far just a placeholder)
+                    // calculate distance away of the restaurant
                     var distanceAway = calculateDistance(
                         coordinates.getLatitude(),
                         coordinates.getLongitude(),

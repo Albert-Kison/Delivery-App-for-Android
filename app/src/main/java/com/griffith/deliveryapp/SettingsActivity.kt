@@ -7,7 +7,11 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,10 +31,12 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -77,63 +83,103 @@ class SettingsActivity : ComponentActivity() {
                 )
             }
 
-            Column {
-                Text(text = "Your name")
-                TextField(value = usernameText.value,
-                    onValueChange = { usernameText.value = it },
-                    textStyle = TextStyle(fontSize = 24.sp),
-                    singleLine = true,
-                    shape = RoundedCornerShape(5),
-                    placeholder = {
-                        Text("Your name", fontSize = 20.sp) // Placeholder text
-                    },
-                    colors = TextFieldDefaults.textFieldColors( // Custom colors and removing bottom border
-                        textColor = Color.Black,
-                        cursorColor = Color.Black,
-                        unfocusedLeadingIconColor = Color.Gray,
-                        unfocusedIndicatorColor = Color.Transparent, // This removes the bottom border
-                        focusedIndicatorColor = Color.Transparent // This removes the bottom border when focused as well
-                    ),
-                    keyboardActions = KeyboardActions.Default,
-                    modifier = Modifier
-                        .padding(16.dp, 0.dp, 16.dp, 0.dp)
-                        .fillMaxWidth()
-                )
-
-
-                Text(text = "Your address")
-                GoogleMap(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth()
-                        .height(200.dp),
-                    cameraPositionState = cameraPositionState,
-                    onMapClick = ({
-                        coordinates.setLatitude(it.latitude)
-                        coordinates.setLongitude(it.longitude)
-
-                        currentLocationState.value = MarkerState(position = it)
-                    })
+            DeliveryAppTheme {
+                // A surface container using the 'background' color from the theme
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
                 ) {
-                    Marker(
-                        state = currentLocationState.value,
-                        title = "Delivery address",
-                    )
-                }
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(text = "Your name", fontSize = 20.sp)
+                            TextField(
+                                value = usernameText.value,
+                                onValueChange = { usernameText.value = it },
+                                textStyle = TextStyle(fontSize = 20.sp),
+                                singleLine = true,
+                                shape = RoundedCornerShape(5),
+                                placeholder = {
+                                    Text("Your name", fontSize = 20.sp) // Placeholder text
+                                },
+                                colors = TextFieldDefaults.textFieldColors( // Custom colors and removing bottom border
+                                    textColor = Color.Black,
+                                    cursorColor = Color.Black,
+                                    unfocusedLeadingIconColor = Color.Gray,
+                                    unfocusedIndicatorColor = Color.Transparent, // This removes the bottom border
+                                    focusedIndicatorColor = Color.Transparent // This removes the bottom border when focused as well
+                                ),
+                                keyboardActions = KeyboardActions.Default,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                            )
 
-                Button(onClick = {
-                    val intent = Intent()
-                    intent.putExtra("newUsername", usernameText.value)
-                    intent.putExtra("newLatitude", currentLocationState.value.position.latitude)
-                    intent.putExtra("newLongitude", currentLocationState.value.position.longitude)
-                    setResult(Activity.RESULT_OK, intent)
 
-                    finish()
-                }) {
-                    Text(text = "Save")
+                            Text(text = "Your address", fontSize = 20.sp, modifier = Modifier.padding(0.dp, 16.dp, 0.dp, 0.dp))
+                            GoogleMap(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp),
+                                cameraPositionState = cameraPositionState,
+                                onMapClick = ({
+                                    coordinates.setLatitude(it.latitude)
+                                    coordinates.setLongitude(it.longitude)
+
+                                    currentLocationState.value = MarkerState(position = it)
+                                })
+                            ) {
+                                Marker(
+                                    state = currentLocationState.value,
+                                    title = "Delivery address",
+                                )
+                            }
+
+//                    Button(onClick = {
+//                        val intent = Intent()
+//                        intent.putExtra("newUsername", usernameText.value)
+//                        intent.putExtra("newLatitude", currentLocationState.value.position.latitude)
+//                        intent.putExtra("newLongitude", currentLocationState.value.position.longitude)
+//                        setResult(Activity.RESULT_OK, intent)
+//
+//                        finish()
+//                    }) {
+//                        Text(text = "Save")
+//                    }
+                        }
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        Box(
+                            contentAlignment = Alignment.BottomCenter,
+                            modifier = Modifier
+                                .background(Color(238, 150, 75))
+                                .fillMaxWidth()
+                                .clickable {
+                                    val intent = Intent()
+                                    intent.putExtra("newUsername", usernameText.value)
+                                    intent.putExtra(
+                                        "newLatitude",
+                                        currentLocationState.value.position.latitude
+                                    )
+                                    intent.putExtra(
+                                        "newLongitude",
+                                        currentLocationState.value.position.longitude
+                                    )
+                                    setResult(Activity.RESULT_OK, intent)
+
+                                    finish()
+                                }
+                        ) {
+                            Text(
+                                text = "Save",
+                                fontSize = 20.sp,
+                                modifier = Modifier.padding(16.dp),
+                                color = Color.White,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
+                    }
                 }
             }
-
         }
     }
 }
