@@ -512,7 +512,14 @@ class MainActivity : ComponentActivity() {
                     Text(text = "Delivery time $deliveryTime minutes", color = Color.Gray)
 
                     // distance away of the restaurant (so far just a placeholder)
-                    Text(text = "2.3 km", color = Color.Gray)
+                    var distanceAway = calculateDistance(
+                        coordinates.getLatitude(),
+                        coordinates.getLongitude(),
+                        res["latitude"] as Double,
+                        res["longitude"] as Double
+                    ) / 1000
+                    distanceAway = "%.1f".format(distanceAway).toFloat()
+                    Text(text = "$distanceAway km", color = Color.Gray)
                 }
             }
         }

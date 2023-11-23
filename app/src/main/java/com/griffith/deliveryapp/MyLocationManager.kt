@@ -1,3 +1,4 @@
+import android.app.AlertDialog
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.activity.ComponentActivity
@@ -56,11 +57,28 @@ class MyLocationManager(
                 android.Manifest.permission.ACCESS_FINE_LOCATION
             )
         ) {
-            // Explain why you need the permission
-            // You can show a dialog or a snackbar here
+            // show a dialog to explain why the permission is needed
+            showPermissionRationaleDialog()
         } else {
             // No explanation needed, request the permission
             locationPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
         }
     }
+
+    private fun showPermissionRationaleDialog() {
+        val dialogBuilder = AlertDialog.Builder(context)
+        dialogBuilder.setTitle("Location Permission Required")
+        dialogBuilder.setMessage("This app needs your location to provide relevant services.")
+        dialogBuilder.setPositiveButton("Grant Permission") { _, _ ->
+            // Launch the permission request when the user clicks "Grant Permission"
+            locationPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+        dialogBuilder.setNegativeButton("Cancel") { _, _ ->
+
+        }
+        val dialog = dialogBuilder.create()
+        dialog.show()
+    }
+
+
 }
