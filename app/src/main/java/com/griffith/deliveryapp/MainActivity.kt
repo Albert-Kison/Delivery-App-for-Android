@@ -253,7 +253,39 @@ class MainActivity : ComponentActivity() {
                         Text(text = coordinates.getLongitude().toString())
                         Text(text = temperature.value.toString())
 
-                        if (restaurantList.value.size > 0) {
+                        if (!isLocationInitialized && !skipLocationInitialization) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = "Loading...",
+                                        fontSize = 24.sp,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+                        } else if (restaurantList.value.size == 0) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = "There no restaurants in your area",
+                                        fontSize = 24.sp,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+                        } else {
                             // scrollable column of the restaurants' cards
                             LazyColumn(
                                 modifier = Modifier.weight(1f)
@@ -278,22 +310,6 @@ class MainActivity : ComponentActivity() {
                                             Spacer(modifier = Modifier.height(16.dp))
                                         }
                                     }
-                                }
-                            }
-                        } else {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center
-                                ) {
-                                    Text(
-                                        text = "There no restaurants in your area",
-                                        fontSize = 24.sp,
-                                        textAlign = TextAlign.Center
-                                    )
                                 }
                             }
                         }
