@@ -83,14 +83,19 @@ class MainActivity : ComponentActivity() {
     private val basket: Basket = Basket.getInstance()
 
     private var isLocationInitialized = false
+    // current coordinates
     private val coordinates: Coordinates = Coordinates.getInstance()
 
     // number of items in the basket
     private val itemCount = mutableStateOf(basket.getItems().size)
 
+    // to filter restaurants
     private val restaurantList = mutableStateOf(data)
 
+    // username to greet the user
     private val username = mutableStateOf("Guest")
+
+    // get new username and delivery address
     private val startSettingsActivityForResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
@@ -109,8 +114,10 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+    // request the location
     private val locationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            // if granted, initialize the location
             if (isGranted) {
                 initializeLocation()
             } else {
@@ -131,9 +138,9 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-    private val MY_PERMISSIONS_REQUEST_LOCATION = 123
-
+    // store the temperature from the sensor
     private var temperature = mutableStateOf(0f)
+    // handle the temperature change
     private val sensorEventListener: SensorEventListener = object : SensorEventListener {
         override fun onSensorChanged(event: SensorEvent?) {
             if (event?.sensor?.type == Sensor.TYPE_AMBIENT_TEMPERATURE) {
@@ -155,22 +162,27 @@ class MainActivity : ComponentActivity() {
         val skipLocationInitialization =
             intent?.getBooleanExtra("skipLocationInitialization", false) ?: false
 
+        // if location not initialised, do so
         if (!isLocationInitialized && !skipLocationInitialization) {
             initializeLocation()
         }
 
+        // get the coordinates from another activity
         val userLatitude = intent.getDoubleExtra("userLatitude", 0.0)
         val userLongitude = intent.getDoubleExtra("userLongitude", 0.0)
 
+        // filter the restaurants
         filterRestaurantsBasedOnCoordinates(userLatitude, userLongitude)
 
         setContent {
             val context = LocalContext.current
 
+            // get the temperature sensor and register the listener
             val sensorManager: SensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
             val temperatureSensor = sensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE)
             sensorManager.registerListener(sensorEventListener, temperatureSensor, SensorManager.SENSOR_DELAY_NORMAL)
 
+            // set the coordinates
             myLocationManager.getCoordinates { latitude, longitude ->
                 coordinates.setLatitude(latitude)
                 coordinates.setLongitude(longitude)
@@ -187,13 +199,20 @@ class MainActivity : ComponentActivity() {
                 ) {
                     // Column of the search text field, the restaurants cards, and the "View basket" button
                     Column(modifier = Modifier.fillMaxSize()) {
+
+                        // greeting and the settings button
                         Row(verticalAlignment = Alignment.CenterVertically) {
+
+                            // greet the user
                             Text(
                                 text = "Hello " + username.value,
                                 modifier = Modifier.padding(16.dp, 0.dp, 0.dp, 0.dp),
                                 fontSize = 20.sp
                             )
+
                             Spacer(modifier = Modifier.weight(1f))
+
+                            // the settings button
                             FloatingActionButton(
                                 modifier = Modifier.height(50.dp),
 //                                shape = RoundedCornerShape(5),
@@ -216,6 +235,7 @@ class MainActivity : ComponentActivity() {
                         }
 
 
+                        // the search text field
                         TextField(
                             value = searchText.value,
                             onValueChange = {
@@ -252,11 +272,9 @@ class MainActivity : ComponentActivity() {
                                 .fillMaxWidth()
                         )
 
-//                        Text(text = coordinates.getLatitude().toString())
-//                        Text(text = coordinates.getLongitude().toString())
-//                        Text(text = temperature.value.toString())
-
                         if (!isLocationInitialized && !skipLocationInitialization) {
+
+                            // show loading... if location is initialising
                             Box(
                                 contentAlignment = Alignment.Center,
                                 modifier = Modifier.fillMaxSize()
@@ -273,6 +291,8 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         } else if (restaurantList.value.size == 0) {
+
+                            // show if there are no restaurants in the area
                             Box(
                                 contentAlignment = Alignment.Center,
                                 modifier = Modifier.fillMaxSize()
@@ -308,6 +328,8 @@ class MainActivity : ComponentActivity() {
                                                     "restaurantId",
                                                     res["id"] as? String
                                                 )
+
+                                                // start the restaurant activity (ResDetails)
                                                 startActivityForItemCountResult.launch(intent)
                                             })
                                             Spacer(modifier = Modifier.height(16.dp))
@@ -334,7 +356,7 @@ class MainActivity : ComponentActivity() {
 
     }
 
-
+    // update the restaurants list
     private fun updateLocationAndFilterRestaurants() {
         myLocationManager.resetSkipLocationUpdates()
         val userLatitude = coordinates.getLatitude()
@@ -367,6 +389,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // search restaurants by name and based on the delivery address
     private fun searchAndFilterRestaurants(query: String, latitude: Double, longitude: Double) {
         if (query.isBlank()) {
             // If the query is blank, show the original list
@@ -412,6 +435,7 @@ class MainActivity : ComponentActivity() {
     }
 
 
+    // filter restaurants within a 30 km radius
     private fun filterRestaurantsBasedOnCoordinates(latitude: Double, longitude: Double) {
         // Filter restaurants based on distance
         restaurantList.value = data.filter { res ->
@@ -437,6 +461,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // delivery time calculation
     private fun calculateDeliveryTime(
         userLatitude: Double,
         userLongitude: Double,
@@ -450,6 +475,7 @@ class MainActivity : ComponentActivity() {
         // 1km - 1 minute
         totalDeliveryTime += calculateDistance(userLatitude, userLongitude, restaurantLatitude, restaurantLongitude) / 1000
 
+        // if temperature less than 0, add extra 5 minutes
         if (temperature.value < 0) {
             totalDeliveryTime += 5.0
         }
@@ -458,25 +484,6 @@ class MainActivity : ComponentActivity() {
         return (totalDeliveryTime / 5.0).roundToInt() * 5
     }
 
-
-//    override fun onRequestPermissionsResult(
-//        requestCode: Int,
-//        permissions: Array<out String>,
-//        grantResults: IntArray
-//    ) {
-//        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-//
-//        when (requestCode) {
-//            MY_PERMISSIONS_REQUEST_LOCATION -> {
-//                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//                    // Permission granted, proceed with GPS-related code
-//                    initializeLocation()
-//                } else {
-//                    // Permission denied, handle accordingly (e.g., show a message to the user)
-//                }
-//            }
-//        }
-//    }
 
     @Composable
     fun ResCard(res: Map<String, Any>, onClick: () -> Unit) {

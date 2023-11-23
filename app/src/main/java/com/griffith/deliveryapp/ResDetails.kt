@@ -53,6 +53,7 @@ class ResDetails : ComponentActivity() {
     // number of items in the basket
     private var itemCount = mutableStateOf(basket.getItems().size)
 
+    // if item from another restaurant is added
     private val showErrorDialog =  mutableStateOf(false)
 
     // save the itemCount if modified in another activity
@@ -112,7 +113,7 @@ class ResDetails : ComponentActivity() {
                                                     val returnIntent = Intent()
                                                     setResult(Activity.RESULT_OK, returnIntent)
                                                 } else {
-                                                    // Show a pop-up or dialog indicating that the item cannot be added
+                                                    // Show dialog indicating that the item cannot be added
                                                     showErrorDialog.value = true
                                                 }
                                             })
@@ -129,7 +130,7 @@ class ResDetails : ComponentActivity() {
                             }
                         }
 
-                        // BackgroundOverlay and ShowAddItemErrorDialog positioned in the Box
+                        // add dark background and call the dialog
                         if (showErrorDialog.value) {
                             BackgroundOverlay()
                             ShowAddItemErrorDialog { showErrorDialog.value = false }
@@ -213,6 +214,8 @@ fun ItemCard(item: HashMap<String, Any>, onClick: () -> Unit) {
 }
 
 
+// the error dialog
+// triggered when item from another restaurant is added to the basket
 @Composable
 fun ShowAddItemErrorDialog(onDismiss: () -> Unit) {
     AlertDialog(
@@ -221,7 +224,7 @@ fun ShowAddItemErrorDialog(onDismiss: () -> Unit) {
             Text("Cannot Add Item")
         },
         text = {
-            Text("You can only add items from the same restaurant to the basket.")
+            Text("You can only add items from the same restaurant to the basket.", fontSize = 20.sp)
         },
         confirmButton = {
             Button(
@@ -237,6 +240,7 @@ fun ShowAddItemErrorDialog(onDismiss: () -> Unit) {
     )
 }
 
+// the dark background
 @Composable
 fun BackgroundOverlay() {
     val overlayColor = Color.Black.copy(alpha = 0.5f)

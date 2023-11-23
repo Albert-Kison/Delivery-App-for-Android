@@ -54,19 +54,17 @@ import com.griffith.deliveryapp.ui.theme.DeliveryAppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 class SettingsActivity : ComponentActivity() {
-    private val basket: Basket = Basket.getInstance()
-
     private val coordinates: Coordinates = Coordinates.getInstance()
 
-    private lateinit var myLocationManager: MyLocationManager
-
+    // get current location to display on the map
     private val currentLocation = LatLng(coordinates.getLatitude(), coordinates.getLongitude())
+    // position marker
     private val currentLocationState = mutableStateOf(MarkerState(position = currentLocation))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-
+        // get current username to put it into the text field
         val currentUsername by lazy {
             intent?.getStringExtra("username") ?: ""
         }
@@ -76,6 +74,7 @@ class SettingsActivity : ComponentActivity() {
         setContent {
             val context = LocalContext.current
 
+            // position the camera on the current delivery address
             val cameraPositionState = rememberCameraPositionState {
                 position = CameraPosition.fromLatLngZoom(
                     currentLocation,
@@ -91,6 +90,8 @@ class SettingsActivity : ComponentActivity() {
                 ) {
                     Column(modifier = Modifier.fillMaxSize()) {
                         Column(modifier = Modifier.padding(16.dp)) {
+
+                            // username text field
                             Text(text = "Your name", fontSize = 20.sp)
                             TextField(
                                 value = usernameText.value,
@@ -114,6 +115,7 @@ class SettingsActivity : ComponentActivity() {
                             )
 
 
+                            // display google maps
                             Text(text = "Your address", fontSize = 20.sp, modifier = Modifier.padding(0.dp, 16.dp, 0.dp, 0.dp))
                             GoogleMap(
                                 modifier = Modifier
@@ -121,9 +123,11 @@ class SettingsActivity : ComponentActivity() {
                                     .height(200.dp),
                                 cameraPositionState = cameraPositionState,
                                 onMapClick = ({
+                                    // update the coordinates
                                     coordinates.setLatitude(it.latitude)
                                     coordinates.setLongitude(it.longitude)
 
+                                    // position the marker on the new location
                                     currentLocationState.value = MarkerState(position = it)
                                 })
                             ) {
@@ -132,22 +136,11 @@ class SettingsActivity : ComponentActivity() {
                                     title = "Delivery address",
                                 )
                             }
-
-//                    Button(onClick = {
-//                        val intent = Intent()
-//                        intent.putExtra("newUsername", usernameText.value)
-//                        intent.putExtra("newLatitude", currentLocationState.value.position.latitude)
-//                        intent.putExtra("newLongitude", currentLocationState.value.position.longitude)
-//                        setResult(Activity.RESULT_OK, intent)
-//
-//                        finish()
-//                    }) {
-//                        Text(text = "Save")
-//                    }
                         }
 
                         Spacer(modifier = Modifier.weight(1f))
 
+                        // the save button
                         Box(
                             contentAlignment = Alignment.BottomCenter,
                             modifier = Modifier
@@ -155,7 +148,11 @@ class SettingsActivity : ComponentActivity() {
                                 .fillMaxWidth()
                                 .clickable {
                                     val intent = Intent()
+
+                                    // put updated username
                                     intent.putExtra("newUsername", usernameText.value)
+
+                                    // put updated coordinates
                                     intent.putExtra(
                                         "newLatitude",
                                         currentLocationState.value.position.latitude
@@ -164,6 +161,7 @@ class SettingsActivity : ComponentActivity() {
                                         "newLongitude",
                                         currentLocationState.value.position.longitude
                                     )
+
                                     setResult(Activity.RESULT_OK, intent)
 
                                     finish()

@@ -118,6 +118,7 @@ class BasketActivity : ComponentActivity() {
                                         .clickable {
                                             basket.clearBasket()
                                             val intent = Intent(context, MainActivity::class.java) // Create the intent
+
                                             intent.putExtra("skipLocationInitialization", true)
                                             val userLatitude = coordinates.getLatitude()
                                             val userLongitude = coordinates.getLongitude()
