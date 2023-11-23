@@ -176,6 +176,9 @@ class MainActivity : ComponentActivity() {
                 coordinates.setLongitude(longitude)
             }
 
+            val a = coordinates.getLatitude()
+            val b = coordinates.getLongitude()
+
             DeliveryAppTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
@@ -248,10 +251,10 @@ class MainActivity : ComponentActivity() {
                                 .padding(16.dp, 0.dp, 16.dp, 0.dp)
                                 .fillMaxWidth()
                         )
-                        
-                        Text(text = coordinates.getLatitude().toString())
-                        Text(text = coordinates.getLongitude().toString())
-                        Text(text = temperature.value.toString())
+
+//                        Text(text = coordinates.getLatitude().toString())
+//                        Text(text = coordinates.getLongitude().toString())
+//                        Text(text = temperature.value.toString())
 
                         if (!isLocationInitialized && !skipLocationInitialization) {
                             Box(
