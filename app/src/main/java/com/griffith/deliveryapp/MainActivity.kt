@@ -67,6 +67,7 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.griffith.deliveryapp.ui.theme.DeliveryAppTheme
 import java.io.Serializable
+import kotlin.math.roundToInt
 
 
 // text used to search for restaurants (not implemented yet)
@@ -116,13 +117,14 @@ class MainActivity : ComponentActivity() {
     private lateinit var myLocationManager: MyLocationManager
 
     // save the itemCount if modified in another activity
-    private val startActivityForItemCountResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            // Retrieve the updated item count from the basket
-            val itemCount = Basket.getInstance().getItems().size
-            this.itemCount.value = itemCount
+    private val startActivityForItemCountResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                // Retrieve the updated item count from the basket
+                val itemCount = Basket.getInstance().getItems().size
+                this.itemCount.value = itemCount
+            }
         }
-    }
 
     private val MY_PERMISSIONS_REQUEST_LOCATION = 123
 
@@ -132,7 +134,8 @@ class MainActivity : ComponentActivity() {
         myLocationManager = MyLocationManager(this, locationPermissionLauncher)
 
         // Check if the intent contains the flag to skip location initialization
-        val skipLocationInitialization = intent?.getBooleanExtra("skipLocationInitialization", false) ?: false
+        val skipLocationInitialization =
+            intent?.getBooleanExtra("skipLocationInitialization", false) ?: false
 
         if (!isLocationInitialized && !skipLocationInitialization) {
             initializeLocation()
@@ -159,8 +162,11 @@ class MainActivity : ComponentActivity() {
                 ) {
                     // Column of the search text field, the restaurants cards, and the "View basket" button
                     Column(modifier = Modifier.fillMaxSize()) {
-                        Row (verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "Hello " + username.value, modifier = Modifier.padding(16.dp, 0.dp, 0.dp, 0.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "Hello " + username.value,
+                                modifier = Modifier.padding(16.dp, 0.dp, 0.dp, 0.dp)
+                            )
                             Spacer(modifier = Modifier.weight(1f))
                             FloatingActionButton(
                                 modifier = Modifier.height(50.dp),
@@ -182,13 +188,18 @@ class MainActivity : ComponentActivity() {
                                 Icon(Icons.Filled.Settings, "Add")
                             }
                         }
-                        
-                        
-                        TextField(value = searchText.value,
+
+
+                        TextField(
+                            value = searchText.value,
                             onValueChange = {
                                 searchText.value = it
-                                searchAndFilterRestaurants(it, coordinates.getLatitude(), coordinates.getLongitude())
-                                            },
+                                searchAndFilterRestaurants(
+                                    it,
+                                    coordinates.getLatitude(),
+                                    coordinates.getLongitude()
+                                )
+                            },
                             textStyle = TextStyle(fontSize = 24.sp),
                             singleLine = true,
                             shape = RoundedCornerShape(5),
@@ -233,7 +244,10 @@ class MainActivity : ComponentActivity() {
                                                     "menu",
                                                     res["menu"] as? Serializable
                                                 )
-                                                intent.putExtra("restaurantId", res["id"] as? String)
+                                                intent.putExtra(
+                                                    "restaurantId",
+                                                    res["id"] as? String
+                                                )
                                                 startActivityForItemCountResult.launch(intent)
                                             })
                                             Spacer(modifier = Modifier.height(16.dp))
@@ -242,12 +256,19 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         } else {
-                            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier.fillMaxSize()
+                            ) {
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.Center
                                 ) {
-                                    Text(text = "There no restaurants in your area", fontSize = 24.sp, textAlign = TextAlign.Center)
+                                    Text(
+                                        text = "There no restaurants in your area",
+                                        fontSize = 24.sp,
+                                        textAlign = TextAlign.Center
+                                    )
                                 }
                             }
                         }
@@ -255,10 +276,14 @@ class MainActivity : ComponentActivity() {
                         // if the basket exists
                         if (itemCount.value > 0) {
                             // this button has a fixed position and is always at the bottom
-                            ViewBasketButton(itemCount = itemCount.value, total = basket.getTotal(), startActivityForItemCountResult)
+                            ViewBasketButton(
+                                itemCount = itemCount.value,
+                                total = basket.getTotal(),
+                                startActivityForItemCountResult
+                            )
                         }
                     }
-                    
+
                 }
             }
         }
@@ -277,7 +302,8 @@ class MainActivity : ComponentActivity() {
         super.onStart()
 
         // If the activity is started from another activity, skip location updates
-        val skipLocationInitialization = intent?.getBooleanExtra("skipLocationInitialization", false) ?: false
+        val skipLocationInitialization =
+            intent?.getBooleanExtra("skipLocationInitialization", false) ?: false
         if (skipLocationInitialization) {
             myLocationManager.skipLocationUpdates()
         } else {
@@ -290,7 +316,8 @@ class MainActivity : ComponentActivity() {
         super.onResume()
 
         // If not skipping location updates, update location and filter restaurants
-        val skipLocationInitialization = intent?.getBooleanExtra("skipLocationInitialization", false) ?: false
+        val skipLocationInitialization =
+            intent?.getBooleanExtra("skipLocationInitialization", false) ?: false
         if (!skipLocationInitialization) {
             updateLocationAndFilterRestaurants()
         }
@@ -309,29 +336,39 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun isWithinDistance(res: Map<String, Any>, latitude: Double, longitude: Double): Boolean {
+    private fun isWithinDistance(
+        res: Map<String, Any>,
+        latitude: Double,
+        longitude: Double
+    ): Boolean {
         val restaurantLatitude = res["latitude"] as Double
         val restaurantLongitude = res["longitude"] as Double
-        val distance = calculateDistance(latitude, longitude, restaurantLatitude, restaurantLongitude)
+        val distance =
+            calculateDistance(latitude, longitude, restaurantLatitude, restaurantLongitude)
         // Filter restaurants within a 30 km radius
         return distance <= 30000.0
     }
 
 
-
-    fun calculateDistance(
+    private fun calculateDistance(
         userLatitude: Double,
         userLongitude: Double,
         restaurantLatitude: Double,
         restaurantLongitude: Double
     ): Float {
         val results = FloatArray(1)
-        Location.distanceBetween(userLatitude, userLongitude, restaurantLatitude, restaurantLongitude, results)
+        Location.distanceBetween(
+            userLatitude,
+            userLongitude,
+            restaurantLatitude,
+            restaurantLongitude,
+            results
+        )
         return results[0]
     }
 
 
-    fun filterRestaurantsBasedOnCoordinates(latitude: Double, longitude: Double) {
+    private fun filterRestaurantsBasedOnCoordinates(latitude: Double, longitude: Double) {
         // Filter restaurants based on distance
         restaurantList.value = data.filter { res ->
             val restaurantLatitude = res["latitude"] as Double
@@ -348,13 +385,28 @@ class MainActivity : ComponentActivity() {
     }
 
 
-
     private fun initializeLocation() {
         myLocationManager.getCoordinates { latitude, longitude ->
             isLocationInitialized = true
             // Filter restaurants based on distance
             filterRestaurantsBasedOnCoordinates(latitude, longitude)
         }
+    }
+
+    private fun calculateDeliveryTime(
+        userLatitude: Double,
+        userLongitude: Double,
+        restaurantLatitude: Double,
+        restaurantLongitude: Double
+    ): Int {
+        // minimum delivery time
+        val minDeliveryTime = 20.0
+        var totalDeliveryTime = minDeliveryTime
+
+        totalDeliveryTime += calculateDistance(userLatitude, userLongitude, restaurantLatitude, restaurantLongitude) / 1000
+
+        // round to nearest 5
+        return (totalDeliveryTime / 5.0).roundToInt() * 5
     }
 
 
@@ -376,57 +428,63 @@ class MainActivity : ComponentActivity() {
 //            }
 //        }
 //    }
-}
 
-
-@Composable
-fun ResCard(res: Map<String, Any>, onClick: () -> Unit) {
-    // the card has elevation and is clickable
-    Card (
-        elevation = CardDefaults.cardElevation(3.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        modifier = Modifier.clickable { onClick() }
-    ) {
-        Column {
-            // image of the restaurant
-            Image(
-                painter = painterResource(res["img"] as Int ?: R.drawable.default_image),
-                contentDescription = res["name"] as String ?: "Restaurant", // decorative
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .height(150.dp)
-                    .fillMaxWidth()
-            )
-
-            Column (modifier = Modifier.padding(16.dp, 10.dp, 16.dp, 10.dp)) {
-
-                // name of the restaurant
-                Text(
-                    text = res["name"] as String ?: "Restaurant",
-                    fontSize =  24.sp,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold
+    @Composable
+    fun ResCard(res: Map<String, Any>, onClick: () -> Unit) {
+        // the card has elevation and is clickable
+        Card(
+            elevation = CardDefaults.cardElevation(3.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            modifier = Modifier.clickable { onClick() }
+        ) {
+            Column {
+                // image of the restaurant
+                Image(
+                    painter = painterResource(res["img"] as Int ?: R.drawable.default_image),
+                    contentDescription = res["name"] as String ?: "Restaurant", // decorative
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .height(150.dp)
+                        .fillMaxWidth()
                 )
 
-                // rating of the restaurant
-                Row (verticalAlignment = Alignment.CenterVertically) {
-                    Image(painter = painterResource(id = R.drawable.star), contentDescription = "rating")
-                    var rating = ""
-                    if (res["rating"] as Double <= 2.5) {
-                        rating = "Bad"
-                    } else if (res["rating"] as Double <= 3.5) {
-                        rating = "Satisfied"
-                    } else if (res["rating"] as Double <= 4.5) {
-                        rating = "Good"
-                    } else rating = "Very good"
-                    Text(text = rating + " (" + res["reviewsNumber"].toString() + "+)", color = Color.Gray)
+                Column(modifier = Modifier.padding(16.dp, 10.dp, 16.dp, 10.dp)) {
+
+                    // name of the restaurant
+                    Text(
+                        text = res["name"] as String ?: "Restaurant",
+                        fontSize = 24.sp,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    // rating of the restaurant
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Image(
+                            painter = painterResource(id = R.drawable.star),
+                            contentDescription = "rating"
+                        )
+                        var rating = ""
+                        if (res["rating"] as Double <= 2.5) {
+                            rating = "Bad"
+                        } else if (res["rating"] as Double <= 3.5) {
+                            rating = "Satisfied"
+                        } else if (res["rating"] as Double <= 4.5) {
+                            rating = "Good"
+                        } else rating = "Very good"
+                        Text(
+                            text = rating + " (" + res["reviewsNumber"].toString() + "+)",
+                            color = Color.Gray
+                        )
+                    }
+
+                    // delivery time of the restaurant
+                    val deliveryTime = calculateDeliveryTime(coordinates.getLatitude(), coordinates.getLongitude(), res["latitude"] as Double, res["longitude"] as Double)
+                    Text(text = "Delivery time $deliveryTime minutes", color = Color.Gray)
+
+                    // distance away of the restaurant (so far just a placeholder)
+                    Text(text = "2.3 km", color = Color.Gray)
                 }
-
-                // delivery time of the restaurant (so far just a placeholder)
-                Text(text = "Delivery time 30-45 minutes", color = Color.Gray)
-
-                // distance away of the restaurant (so far just a placeholder)
-                Text(text = "2.3 km", color = Color.Gray)
             }
         }
     }
