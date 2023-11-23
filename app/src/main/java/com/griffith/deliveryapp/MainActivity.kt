@@ -7,6 +7,10 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
@@ -62,6 +66,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
 import com.google.android.gms.common.api.GoogleApi.Settings
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -128,6 +133,19 @@ class MainActivity : ComponentActivity() {
 
     private val MY_PERMISSIONS_REQUEST_LOCATION = 123
 
+    private var temperature = mutableStateOf(0f)
+    private val sensorEventListener: SensorEventListener = object : SensorEventListener {
+        override fun onSensorChanged(event: SensorEvent?) {
+            if (event?.sensor?.type == Sensor.TYPE_AMBIENT_TEMPERATURE) {
+                temperature.value = event.values[0]
+            }
+        }
+
+        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+            print(accuracy)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -148,6 +166,10 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val context = LocalContext.current
+
+            val sensorManager: SensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+            val temperatureSensor = sensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE)
+            sensorManager.registerListener(sensorEventListener, temperatureSensor, SensorManager.SENSOR_DELAY_NORMAL)
 
             myLocationManager.getCoordinates { latitude, longitude ->
                 coordinates.setLatitude(latitude)
@@ -225,8 +247,10 @@ class MainActivity : ComponentActivity() {
                                 .padding(16.dp, 0.dp, 16.dp, 0.dp)
                                 .fillMaxWidth()
                         )
+                        
                         Text(text = coordinates.getLatitude().toString())
                         Text(text = coordinates.getLongitude().toString())
+                        Text(text = temperature.value.toString())
 
                         if (restaurantList.value.size > 0) {
                             // scrollable column of the restaurants' cards
@@ -403,7 +427,12 @@ class MainActivity : ComponentActivity() {
         val minDeliveryTime = 20.0
         var totalDeliveryTime = minDeliveryTime
 
+        // 1km - 1 minute
         totalDeliveryTime += calculateDistance(userLatitude, userLongitude, restaurantLatitude, restaurantLongitude) / 1000
+
+        if (temperature.value < 0) {
+            totalDeliveryTime += 5.0
+        }
 
         // round to nearest 5
         return (totalDeliveryTime / 5.0).roundToInt() * 5
