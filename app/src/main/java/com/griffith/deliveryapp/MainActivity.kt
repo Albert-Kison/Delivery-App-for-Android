@@ -138,6 +138,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+    private val MY_PERMISSIONS_REQUEST_LOCATION = 123
+
     // store the temperature from the sensor
     private var temperature = mutableStateOf(0f)
     // handle the temperature change
@@ -188,8 +190,6 @@ class MainActivity : ComponentActivity() {
                 coordinates.setLongitude(longitude)
             }
 
-            val a = coordinates.getLatitude()
-            val b = coordinates.getLongitude()
 
             DeliveryAppTheme {
                 // A surface container using the 'background' color from the theme
@@ -271,6 +271,11 @@ class MainActivity : ComponentActivity() {
                                 .padding(16.dp, 0.dp, 16.dp, 0.dp)
                                 .fillMaxWidth()
                         )
+
+
+                        val a = coordinates.getLatitude()
+                        val b = coordinates.getLongitude()
+
 
                         if (!isLocationInitialized && !skipLocationInitialization) {
 
@@ -483,6 +488,27 @@ class MainActivity : ComponentActivity() {
         // round to nearest 5
         return (totalDeliveryTime / 5.0).roundToInt() * 5
     }
+
+
+    //    override fun onRequestPermissionsResult(
+//        requestCode: Int,
+//        permissions: Array<out String>,
+//        grantResults: IntArray
+//    ) {
+//        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+//
+//        when (requestCode) {
+//            MY_PERMISSIONS_REQUEST_LOCATION -> {
+//                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                    // Permission granted, proceed with GPS-related code
+//                    initializeLocation()
+//                } else {
+//                    // Permission denied, handle accordingly (e.g., show a message to the user)
+//                }
+//            }
+//        }
+//    }
+
 
 
     @Composable

@@ -56,6 +56,8 @@ import com.griffith.deliveryapp.ui.theme.DeliveryAppTheme
 class SettingsActivity : ComponentActivity() {
     private val coordinates: Coordinates = Coordinates.getInstance()
 
+    private lateinit var myLocationManager: MyLocationManager
+
     // get current location to display on the map
     private val currentLocation = LatLng(coordinates.getLatitude(), coordinates.getLongitude())
     // position marker
@@ -161,6 +163,8 @@ class SettingsActivity : ComponentActivity() {
                                         "newLongitude",
                                         currentLocationState.value.position.longitude
                                     )
+
+                                    intent.putExtra("skipLocationInitialization", true)
 
                                     setResult(Activity.RESULT_OK, intent)
 
