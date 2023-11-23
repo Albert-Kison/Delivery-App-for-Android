@@ -1,5 +1,6 @@
 package com.griffith.deliveryapp
 
+import MyLocationManager
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -87,15 +88,32 @@ class MainActivity : ComponentActivity() {
     private val startSettingsActivityForResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
-                // Retrieve the updated username from the intent
-                val newUsername =
-                    result.data?.getStringExtra("newUsername")
+                // Retrieve the updated username and location from the intent
+                val newUsername = result.data?.getStringExtra("newUsername")
+                val newLatitude = result.data?.getDoubleExtra("newLatitude", 0.0)
+                val newLongitude = result.data?.getDoubleExtra("newLongitude", 0.0)
+
                 newUsername?.let {
                     // Update the username in MainActivity
                     username.value = it
                 }
+
+                // Update location and filter restaurants when settings are updated
+                filterRestaurantsBasedOnCoordinates(newLatitude ?: 0.0, newLongitude ?: 0.0)
             }
         }
+
+    private val locationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                initializeLocation()
+            } else {
+                // Handle the case where the user denied the location permission
+
+            }
+        }
+
+    private lateinit var myLocationManager: MyLocationManager
 
     // save the itemCount if modified in another activity
     private val startActivityForItemCountResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -111,6 +129,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        myLocationManager = MyLocationManager(this, locationPermissionLauncher)
+
         // Check if the intent contains the flag to skip location initialization
         val skipLocationInitialization = intent?.getBooleanExtra("skipLocationInitialization", false) ?: false
 
@@ -118,8 +138,18 @@ class MainActivity : ComponentActivity() {
             initializeLocation()
         }
 
+        val userLatitude = intent.getDoubleExtra("userLatitude", 0.0)
+        val userLongitude = intent.getDoubleExtra("userLongitude", 0.0)
+
+        filterRestaurantsBasedOnCoordinates(userLatitude, userLongitude)
+
         setContent {
             val context = LocalContext.current
+
+            myLocationManager.getCoordinates { latitude, longitude ->
+                coordinates.setLatitude(latitude)
+                coordinates.setLongitude(longitude)
+            }
 
             DeliveryAppTheme {
                 // A surface container using the 'background' color from the theme
@@ -157,7 +187,7 @@ class MainActivity : ComponentActivity() {
                         TextField(value = searchText.value,
                             onValueChange = {
                                 searchText.value = it
-                                searchRestaurants(it)
+                                searchAndFilterRestaurants(it, coordinates.getLatitude(), coordinates.getLongitude())
                                             },
                             textStyle = TextStyle(fontSize = 24.sp),
                             singleLine = true,
@@ -225,7 +255,7 @@ class MainActivity : ComponentActivity() {
                         // if the basket exists
                         if (itemCount.value > 0) {
                             // this button has a fixed position and is always at the bottom
-                            ViewBasketButton(itemCount = basket.getItems().size, total = basket.getTotal(), startActivityForItemCountResult)
+                            ViewBasketButton(itemCount = itemCount.value, total = basket.getTotal(), startActivityForItemCountResult)
                         }
                     }
                     
@@ -236,23 +266,57 @@ class MainActivity : ComponentActivity() {
     }
 
 
+    private fun updateLocationAndFilterRestaurants() {
+        myLocationManager.resetSkipLocationUpdates()
+        val userLatitude = coordinates.getLatitude()
+        val userLongitude = coordinates.getLongitude()
+        filterRestaurantsBasedOnCoordinates(userLatitude, userLongitude)
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        // If the activity is started from another activity, skip location updates
+        val skipLocationInitialization = intent?.getBooleanExtra("skipLocationInitialization", false) ?: false
+        if (skipLocationInitialization) {
+            myLocationManager.skipLocationUpdates()
+        } else {
+            // If not skipping, update location and filter restaurants
+            updateLocationAndFilterRestaurants()
+        }
+    }
+
     override fun onResume() {
         super.onResume()
 
-        // Call your method to update the location and filter restaurants
-        filterRestaurantsBasedOnCoordinates(coordinates)
+        // If not skipping location updates, update location and filter restaurants
+        val skipLocationInitialization = intent?.getBooleanExtra("skipLocationInitialization", false) ?: false
+        if (!skipLocationInitialization) {
+            updateLocationAndFilterRestaurants()
+        }
     }
 
-    private fun searchRestaurants(query: String) {
-        restaurantList.value = if (query.isBlank()) {
-            data // If the query is blank, show the original list
+    private fun searchAndFilterRestaurants(query: String, latitude: Double, longitude: Double) {
+        if (query.isBlank()) {
+            // If the query is blank, show the original list
+            filterRestaurantsBasedOnCoordinates(latitude, longitude)
         } else {
-            // Filter the list based on the search query
-            data.filter { res ->
-                (res["name"] as? String)?.contains(query, ignoreCase = true) == true
+            // Filter the list based on both search query and distance
+            restaurantList.value = data.filter { res ->
+                ((res["name"] as? String)?.contains(query, ignoreCase = true) == true) &&
+                        isWithinDistance(res, latitude, longitude)
             }
         }
     }
+
+    private fun isWithinDistance(res: Map<String, Any>, latitude: Double, longitude: Double): Boolean {
+        val restaurantLatitude = res["latitude"] as Double
+        val restaurantLongitude = res["longitude"] as Double
+        val distance = calculateDistance(latitude, longitude, restaurantLatitude, restaurantLongitude)
+        // Filter restaurants within a 30 km radius
+        return distance <= 30000.0
+    }
+
 
 
     fun calculateDistance(
@@ -267,14 +331,14 @@ class MainActivity : ComponentActivity() {
     }
 
 
-    fun filterRestaurantsBasedOnCoordinates(coordinates: Coordinates) {
+    fun filterRestaurantsBasedOnCoordinates(latitude: Double, longitude: Double) {
         // Filter restaurants based on distance
         restaurantList.value = data.filter { res ->
             val restaurantLatitude = res["latitude"] as Double
             val restaurantLongitude = res["longitude"] as Double
             val distance = calculateDistance(
-                coordinates.getLatitude(),
-                coordinates.getLongitude(),
+                latitude,
+                longitude,
                 restaurantLatitude,
                 restaurantLongitude
             )
@@ -286,70 +350,32 @@ class MainActivity : ComponentActivity() {
 
 
     private fun initializeLocation() {
-        // api to get the location
-        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
-        // request the permission, executes when permission is not granted
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                ),
-                MY_PERMISSIONS_REQUEST_LOCATION
-            )
-            return
-        }
-
-        // get the last known location
-        fusedLocationClient.lastLocation
-            .addOnSuccessListener { location: Location? ->
-                // Got last known location. In some rare situations, this can be null.
-                if (location != null) {
-                    // Handle location
-                    coordinates.setLatitude(location.latitude)
-                    coordinates.setLongitude(location.longitude)
-
-                    isLocationInitialized = true
-
-                    // Filter restaurants based on distance
-                    filterRestaurantsBasedOnCoordinates(coordinates)
-                } else {
-                    // Handle the case where the last known location is null
-                }
-            }
-            .addOnFailureListener { e ->
-                // Handle failure to get location
-            }
-    }
-
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        when (requestCode) {
-            MY_PERMISSIONS_REQUEST_LOCATION -> {
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // Permission granted, proceed with GPS-related code
-                    initializeLocation()
-                } else {
-                    // Permission denied, handle accordingly (e.g., show a message to the user)
-                }
-            }
+        myLocationManager.getCoordinates { latitude, longitude ->
+            isLocationInitialized = true
+            // Filter restaurants based on distance
+            filterRestaurantsBasedOnCoordinates(latitude, longitude)
         }
     }
+
+
+//    override fun onRequestPermissionsResult(
+//        requestCode: Int,
+//        permissions: Array<out String>,
+//        grantResults: IntArray
+//    ) {
+//        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+//
+//        when (requestCode) {
+//            MY_PERMISSIONS_REQUEST_LOCATION -> {
+//                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                    // Permission granted, proceed with GPS-related code
+//                    initializeLocation()
+//                } else {
+//                    // Permission denied, handle accordingly (e.g., show a message to the user)
+//                }
+//            }
+//        }
+//    }
 }
 
 

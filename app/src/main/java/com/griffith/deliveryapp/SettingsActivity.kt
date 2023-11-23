@@ -1,5 +1,6 @@
 package com.griffith.deliveryapp
 
+import MyLocationManager
 import android.app.Activity
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
@@ -50,6 +51,8 @@ class SettingsActivity : ComponentActivity() {
     private val basket: Basket = Basket.getInstance()
 
     private val coordinates: Coordinates = Coordinates.getInstance()
+
+    private lateinit var myLocationManager: MyLocationManager
 
     private val currentLocation = LatLng(coordinates.getLatitude(), coordinates.getLongitude())
     private val currentLocationState = mutableStateOf(MarkerState(position = currentLocation))
@@ -121,7 +124,10 @@ class SettingsActivity : ComponentActivity() {
                 Button(onClick = {
                     val intent = Intent()
                     intent.putExtra("newUsername", usernameText.value)
+                    intent.putExtra("newLatitude", currentLocationState.value.position.latitude)
+                    intent.putExtra("newLongitude", currentLocationState.value.position.longitude)
                     setResult(Activity.RESULT_OK, intent)
+
                     finish()
                 }) {
                     Text(text = "Save")

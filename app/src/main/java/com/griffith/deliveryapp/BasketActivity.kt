@@ -46,6 +46,8 @@ import java.math.RoundingMode
 class BasketActivity : ComponentActivity() {
     private val basket: Basket = Basket.getInstance()
 
+    private val coordinates: Coordinates = Coordinates.getInstance()
+
     // number of items in the basket
     private var itemCount = mutableStateOf(basket.getItems().size)
 
@@ -117,6 +119,11 @@ class BasketActivity : ComponentActivity() {
                                             basket.clearBasket()
                                             val intent = Intent(context, MainActivity::class.java) // Create the intent
                                             intent.putExtra("skipLocationInitialization", true)
+                                            val userLatitude = coordinates.getLatitude()
+                                            val userLongitude = coordinates.getLongitude()
+
+                                            intent.putExtra("userLatitude", userLatitude)
+                                            intent.putExtra("userLongitude", userLongitude)
                                             startActivity(intent)
                                         }
                                 ) {
