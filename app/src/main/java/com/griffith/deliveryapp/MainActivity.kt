@@ -142,6 +142,9 @@ class MainActivity : ComponentActivity() {
 
     // store the temperature from the sensor
     private var temperature = mutableStateOf(0f)
+
+    private lateinit var sensorManager: SensorManager
+    private var temperatureSensor: Sensor? = null
     // handle the temperature change
     private val sensorEventListener: SensorEventListener = object : SensorEventListener {
         override fun onSensorChanged(event: SensorEvent?) {
@@ -180,9 +183,15 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
 
             // get the temperature sensor and register the listener
-            val sensorManager: SensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-            val temperatureSensor = sensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE)
-            sensorManager.registerListener(sensorEventListener, temperatureSensor, SensorManager.SENSOR_DELAY_NORMAL)
+            sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+            temperatureSensor = sensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE)
+            temperatureSensor?.let {
+                sensorManager.registerListener(
+                    sensorEventListener,
+                    it,
+                    SensorManager.SENSOR_DELAY_NORMAL
+                )
+            }
 
             // set the coordinates
             myLocationManager.getCoordinates { latitude, longitude ->
@@ -386,11 +395,27 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
 
+        temperatureSensor?.let {
+            sensorManager.registerListener(
+                sensorEventListener,
+                it,
+                SensorManager.SENSOR_DELAY_NORMAL
+            )
+        }
+
         // If not skipping location updates, update location and filter restaurants
         val skipLocationInitialization =
             intent?.getBooleanExtra("skipLocationInitialization", false) ?: false
         if (!skipLocationInitialization) {
             updateLocationAndFilterRestaurants()
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        temperatureSensor?.let {
+            sensorManager.unregisterListener(sensorEventListener)
         }
     }
 
