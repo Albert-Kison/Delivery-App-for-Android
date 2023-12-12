@@ -72,11 +72,10 @@ class SettingsActivity : ComponentActivity() {
         val editor = sharedPreferences.edit()
 
         // get current username to put it into the text field
-        val currentUsername by lazy {
-            intent?.getStringExtra("username") ?: ""
-        }
-        val usernameText = mutableStateOf(currentUsername)
-
+//        val currentUsername by lazy {
+//            intent?.getStringExtra("username") ?: ""
+//        }
+        val usernameText = mutableStateOf(sharedPreferences.getString("username", "Guest") ?: "Guest")
 
         setContent {
             val context = LocalContext.current
@@ -165,10 +164,13 @@ class SettingsActivity : ComponentActivity() {
                                         "newLatitude",
                                         currentLocationState.value.position.latitude
                                     )
+                                    editor.putFloat("userLatitude", currentLocationState.value.position.latitude.toFloat())
+
                                     intent.putExtra(
                                         "newLongitude",
                                         currentLocationState.value.position.longitude
                                     )
+                                    editor.putFloat("userLongitude", currentLocationState.value.position.longitude.toFloat())
 
                                     intent.putExtra("skipLocationInitialization", true)
 

@@ -103,26 +103,26 @@ class MainActivity : ComponentActivity() {
     private val restaurantList = mutableStateOf(data)
 
     // username to greet the user
-    private val username = mutableStateOf("Guest")
+//    private val username = mutableStateOf("Guest")
 
     // get new username and delivery address
-    private val startSettingsActivityForResult =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                // Retrieve the updated username and location from the intent
-                val newUsername = result.data?.getStringExtra("newUsername")
-                val newLatitude = result.data?.getDoubleExtra("newLatitude", 0.0)
-                val newLongitude = result.data?.getDoubleExtra("newLongitude", 0.0)
-
-                newUsername?.let {
-                    // Update the username in MainActivity
-                    username.value = it
-                }
-
-                // Update location and filter restaurants when settings are updated
-                filterRestaurantsBasedOnCoordinates(newLatitude ?: 0.0, newLongitude ?: 0.0)
-            }
-        }
+//    private val startSettingsActivityForResult =
+//        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+//            if (result.resultCode == Activity.RESULT_OK) {
+//                // Retrieve the updated username and location from the intent
+//                val newUsername = result.data?.getStringExtra("newUsername")
+//                val newLatitude = result.data?.getDoubleExtra("newLatitude", 0.0)
+//                val newLongitude = result.data?.getDoubleExtra("newLongitude", 0.0)
+//
+//                newUsername?.let {
+//                    // Update the username in MainActivity
+//                    username.value = it
+//                }
+//
+//                 Update location and filter restaurants when settings are updated
+//                filterRestaurantsBasedOnCoordinates(newLatitude ?: 0.0, newLongitude ?: 0.0)
+//            }
+//        }
 
     // request the location
     private val locationPermissionLauncher =
@@ -169,6 +169,8 @@ class MainActivity : ComponentActivity() {
     }
 
     val observedUsername = mutableStateOf("Guest")
+    val userLatitude = mutableStateOf(0.0f)
+    val userLongitude = mutableStateOf(0.0f)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -176,6 +178,8 @@ class MainActivity : ComponentActivity() {
         val sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
         // Observe changes in the username from shared preferences
         observedUsername.value = sharedPreferences.getString("username", "Guest") ?: "Guest"
+        userLatitude.value = sharedPreferences.getFloat("userLatitude", 0.0f) ?: 0.0f
+        userLongitude.value = sharedPreferences.getFloat("userLongitude", 0.0f) ?: 0.0f
 
         myLocationManager = MyLocationManager(this, locationPermissionLauncher)
 
@@ -189,11 +193,11 @@ class MainActivity : ComponentActivity() {
         }
 
         // get the coordinates from another activity
-        val userLatitude = intent.getDoubleExtra("userLatitude", 0.0)
-        val userLongitude = intent.getDoubleExtra("userLongitude", 0.0)
+//        val userLatitude = intent.getDoubleExtra("userLatitude", 0.0)
+//        val userLongitude = intent.getDoubleExtra("userLongitude", 0.0)
 
         // filter the restaurants
-        filterRestaurantsBasedOnCoordinates(userLatitude, userLongitude)
+        filterRestaurantsBasedOnCoordinates(userLatitude.value, userLongitude.value)
 
         setContent {
             val context = LocalContext.current
@@ -251,8 +255,8 @@ class MainActivity : ComponentActivity() {
                                 ),
                                 onClick = {
                                     val intent = Intent(context, SettingsActivity::class.java)
-                                    intent.putExtra("username", username.value)
-                                    startSettingsActivityForResult.launch(intent)
+//                                    intent.putExtra("username", username.value)
+                                    startActivity(intent)
                                 },
                             ) {
                                 Icon(Icons.Filled.Settings, "Add", modifier = Modifier.size(30.dp))
@@ -298,12 +302,12 @@ class MainActivity : ComponentActivity() {
                         )
 
 
-                        val a = coordinates.getLatitude()
-                        val b = coordinates.getLongitude()
+//                        val a = coordinates.getLatitude()
+//                        val b = coordinates.getLongitude()
 
                         Text(appData.value)
-                        Text(a.toString())
-                        Text(b.toString())
+                        Text(userLatitude.value.toString())
+                        Text(userLongitude.value.toString())
 
 
                         if (!isLocationInitialized && !skipLocationInitialization) {
@@ -396,9 +400,8 @@ class MainActivity : ComponentActivity() {
     // update the restaurants list
     private fun updateLocationAndFilterRestaurants() {
         myLocationManager.resetSkipLocationUpdates()
-        val userLatitude = coordinates.getLatitude()
-        val userLongitude = coordinates.getLongitude()
-        filterRestaurantsBasedOnCoordinates(userLatitude, userLongitude)
+
+        filterRestaurantsBasedOnCoordinates(userLatitude.value, userLongitude.value)
     }
 
     override fun onStart() {
@@ -421,6 +424,8 @@ class MainActivity : ComponentActivity() {
         val sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
         // Observe changes in the username from shared preferences
         observedUsername.value = sharedPreferences.getString("username", "Guest") ?: "Guest"
+        userLatitude.value = sharedPreferences.getFloat("userLatitude", 0.0f) ?: 0.0f
+        userLongitude.value = sharedPreferences.getFloat("userLongitude", 0.0f) ?: 0.0f
 
         temperatureSensor?.let {
             sensorManager.registerListener(
@@ -490,7 +495,7 @@ class MainActivity : ComponentActivity() {
     private fun searchAndFilterRestaurants(query: String, latitude: Double, longitude: Double) {
         if (query.isBlank()) {
             // If the query is blank, show the original list
-            filterRestaurantsBasedOnCoordinates(latitude, longitude)
+            filterRestaurantsBasedOnCoordinates(userLatitude.value, userLongitude.value)
         } else {
             // Filter the list based on both search query and distance
             restaurantList.value = data.filter { res ->
@@ -533,14 +538,14 @@ class MainActivity : ComponentActivity() {
 
 
     // filter restaurants within a 30 km radius
-    private fun filterRestaurantsBasedOnCoordinates(latitude: Double, longitude: Double) {
+    private fun filterRestaurantsBasedOnCoordinates(latitude: Float, longitude: Float) {
         // Filter restaurants based on distance
         restaurantList.value = data.filter { res ->
             val restaurantLatitude = res["latitude"] as Double
             val restaurantLongitude = res["longitude"] as Double
             val distance = calculateDistance(
-                latitude,
-                longitude,
+                latitude.toDouble(),
+                longitude.toDouble(),
                 restaurantLatitude,
                 restaurantLongitude
             )
@@ -553,8 +558,12 @@ class MainActivity : ComponentActivity() {
     private fun initializeLocation() {
         myLocationManager.getCoordinates { latitude, longitude ->
             isLocationInitialized = true
+
+            userLatitude.value = latitude.toFloat()
+            userLongitude.value = longitude.toFloat()
+
             // Filter restaurants based on distance
-            filterRestaurantsBasedOnCoordinates(latitude, longitude)
+            filterRestaurantsBasedOnCoordinates(userLatitude.value, userLongitude.value)
         }
     }
 
