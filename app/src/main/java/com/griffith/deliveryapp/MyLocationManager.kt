@@ -5,7 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
 
 class MyLocationManager(
     private val context: Context,
@@ -25,6 +27,9 @@ class MyLocationManager(
                             callback.invoke(location.latitude, location.longitude)
                         } else {
                             // Handle the case where the last known location is null
+
+                            // default location
+                            callback.invoke(37.401000, -122.117190)
                         }
                     }
                     .addOnFailureListener { e ->

@@ -2,6 +2,7 @@ package com.griffith.deliveryapp
 
 import MyLocationManager
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -54,6 +55,7 @@ import com.griffith.deliveryapp.ui.theme.DeliveryAppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 class SettingsActivity : ComponentActivity() {
+
     private val coordinates: Coordinates = Coordinates.getInstance()
 
     private lateinit var myLocationManager: MyLocationManager
@@ -65,6 +67,9 @@ class SettingsActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val sharedPreferences = this.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
 
         // get current username to put it into the text field
         val currentUsername by lazy {
@@ -153,6 +158,7 @@ class SettingsActivity : ComponentActivity() {
 
                                     // put updated username
                                     intent.putExtra("newUsername", usernameText.value)
+                                    editor.putString("username", usernameText.value)
 
                                     // put updated coordinates
                                     intent.putExtra(
@@ -166,6 +172,7 @@ class SettingsActivity : ComponentActivity() {
 
                                     intent.putExtra("skipLocationInitialization", true)
 
+                                    editor.apply()
                                     setResult(Activity.RESULT_OK, intent)
 
                                     finish()

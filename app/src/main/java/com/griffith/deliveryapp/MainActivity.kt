@@ -4,9 +4,12 @@ import MyLocationManager
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.database.Cursor
+import android.database.sqlite.SQLiteDatabase
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -16,6 +19,7 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.location.LocationRequest
 import android.os.Bundle
+import android.preference.PreferenceManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -53,6 +57,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -72,14 +77,19 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.griffith.deliveryapp.ui.theme.DeliveryAppTheme
 import java.io.Serializable
+import java.lang.StringBuilder
 import kotlin.math.roundToInt
 
 
 // text used to search for restaurants (not implemented yet)
 var searchText = mutableStateOf("")
+private var appData = mutableStateOf("Empty database")
+private lateinit var databaseManager: DatabaseManager
+private lateinit var database: SQLiteDatabase
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
+
     private val basket: Basket = Basket.getInstance()
 
     private var isLocationInitialized = false
@@ -158,8 +168,14 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    val observedUsername = mutableStateOf("Guest")
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+        // Observe changes in the username from shared preferences
+        observedUsername.value = sharedPreferences.getString("username", "Guest") ?: "Guest"
 
         myLocationManager = MyLocationManager(this, locationPermissionLauncher)
 
@@ -214,7 +230,7 @@ class MainActivity : ComponentActivity() {
 
                             // greet the user
                             Text(
-                                text = "Hello " + username.value,
+                                text = "Hello ${observedUsername.value}",
                                 modifier = Modifier.padding(16.dp, 0.dp, 0.dp, 0.dp),
                                 fontSize = 20.sp
                             )
@@ -284,6 +300,10 @@ class MainActivity : ComponentActivity() {
 
                         val a = coordinates.getLatitude()
                         val b = coordinates.getLongitude()
+
+                        Text(appData.value)
+                        Text(a.toString())
+                        Text(b.toString())
 
 
                         if (!isLocationInitialized && !skipLocationInitialization) {
@@ -368,6 +388,9 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        databaseManager = DatabaseManager(this, "appValues.db", null, 1)
+        database = databaseManager.writableDatabase
+
     }
 
     // update the restaurants list
@@ -395,6 +418,10 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
 
+        val sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+        // Observe changes in the username from shared preferences
+        observedUsername.value = sharedPreferences.getString("username", "Guest") ?: "Guest"
+
         temperatureSensor?.let {
             sensorManager.registerListener(
                 sensorEventListener,
@@ -409,6 +436,8 @@ class MainActivity : ComponentActivity() {
         if (!skipLocationInitialization) {
             updateLocationAndFilterRestaurants()
         }
+
+        appData.value = retrieveAppData()
     }
 
     override fun onPause() {
@@ -417,7 +446,45 @@ class MainActivity : ComponentActivity() {
         temperatureSensor?.let {
             sensorManager.unregisterListener(sensorEventListener)
         }
+
+//        addAppData()
+//        updateAppData()
     }
+
+    private fun retrieveAppData(): String {
+        val table = "AppValues"
+        val columns: Array<String> = arrayOf("Id", "Name", "Value")
+        val cursor: Cursor = database.query(table, columns, null, null, null, null, null)
+
+        var result: StringBuilder = StringBuilder()
+        cursor.moveToFirst()
+        for (i in 0 until cursor.count) {
+            result.append(cursor.getInt(0).toString() + " ")
+            result.append(cursor.getString(1).toString() + " ")
+            result.append(cursor.getString(2).toString() + "\n")
+        }
+        return result.toString()
+    }
+
+//    private fun addAppData() {
+//        val row: ContentValues = ContentValues().apply {
+//            put("Name", "ItemCount")
+//            put("Value", itemCount.value.toString())
+//        }
+//
+//        database.insert("AppData", null, row)
+//    }
+
+//    private fun updateAppData() {
+//        val row: ContentValues = ContentValues().apply {
+//            put("Value", itemCount.value.toString())
+//        }
+//        val table = "AppData"
+//        val where = "Value ="
+//        val whereArgs: Array<String> = arrayOf("ItemCount")
+//
+//        database.update(table, row, where, whereArgs)
+//    }
 
     // search restaurants by name and based on the delivery address
     private fun searchAndFilterRestaurants(query: String, latitude: Double, longitude: Double) {
@@ -515,7 +582,7 @@ class MainActivity : ComponentActivity() {
     }
 
 
-    //    override fun onRequestPermissionsResult(
+//        override fun onRequestPermissionsResult(
 //        requestCode: Int,
 //        permissions: Array<out String>,
 //        grantResults: IntArray

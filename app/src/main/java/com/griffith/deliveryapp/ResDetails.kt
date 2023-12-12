@@ -1,6 +1,7 @@
 package com.griffith.deliveryapp
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.compose.ui.Alignment
@@ -48,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import com.griffith.deliveryapp.ui.theme.DeliveryAppTheme
 
 class ResDetails : ComponentActivity() {
+
     private val basket: Basket = Basket.getInstance()
 
     // number of items in the basket
@@ -68,6 +70,9 @@ class ResDetails : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val sharedPreferences = this.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
 
         setContent {
             // parse the menu data
