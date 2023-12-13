@@ -1,6 +1,7 @@
 package com.griffith.deliveryapp
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -39,21 +40,29 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.gson.Gson
 import com.griffith.deliveryapp.ui.theme.DeliveryAppTheme
 import java.math.BigDecimal
 import java.math.RoundingMode
 
 class BasketActivity : ComponentActivity() {
-    private val basket: Basket = Basket.getInstance()
+    private var basket = mutableStateOf(Basket.getInstance())
 
     private val coordinates: Coordinates = Coordinates.getInstance()
 
     // number of items in the basket
-    private var itemCount = mutableStateOf(basket.getItems().size)
+    private var itemCount = mutableStateOf(basket.value.getItems().size)
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val sharedPreferences = this.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+
+        basket.value = Gson().fromJson(sharedPreferences.getString("basket", Gson().toJson(basket.value)) ?: Gson().toJson(basket.value), Basket::class.java)
+        itemCount.value = basket.value.getItems().size
+
         setContent {
             val context = LocalContext.current
             DeliveryAppTheme {
@@ -93,13 +102,17 @@ class BasketActivity : ComponentActivity() {
                                         )
 
                                         // the items
-                                        BasketItems(basket, onItemRemoved = {
-                                            itemCount.value = basket.getItems().size
+                                        BasketItems(basket.value, onItemRemoved = {
+                                            itemCount.value = basket.value.getItems().size
+
+                                            editor.putString("basket", Gson().toJson(basket.value))
+                                            editor.apply()
+
                                             // save the result when an item is deleted
-                                            val returnIntent = Intent().apply {
-                                                putExtra("itemCount", basket.getItems().size)
-                                            }
-                                            setResult(Activity.RESULT_OK, returnIntent)
+//                                            val returnIntent = Intent().apply {
+//                                                putExtra("itemCount", basket.getItems().size)
+//                                            }
+//                                            setResult(Activity.RESULT_OK, returnIntent)
                                         })
                                     }
                                 }
@@ -116,7 +129,7 @@ class BasketActivity : ComponentActivity() {
                                         .background(Color(238, 150, 75))
                                         .fillMaxWidth()
                                         .clickable {
-                                            basket.clearBasket()
+                                            basket.value.clearBasket()
                                             val intent = Intent(context, MainActivity::class.java) // Create the intent
 
                                             intent.putExtra("skipLocationInitialization", true)
@@ -126,6 +139,9 @@ class BasketActivity : ComponentActivity() {
                                             intent.putExtra("userLatitude", userLatitude)
                                             intent.putExtra("userLongitude", userLongitude)
                                             startActivity(intent)
+
+                                            editor.putString("basket", Gson().toJson(basket.value))
+                                            editor.apply()
                                         }
                                 ) {
                                     Text(
@@ -142,6 +158,13 @@ class BasketActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        val sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+        basket.value = Gson().fromJson(sharedPreferences.getString("basket", Gson().toJson(basket.value)) ?: Gson().toJson(basket.value), Basket::class.java)
     }
 }
 

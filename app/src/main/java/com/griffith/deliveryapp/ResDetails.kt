@@ -46,14 +46,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.gson.Gson
 import com.griffith.deliveryapp.ui.theme.DeliveryAppTheme
 
 class ResDetails : ComponentActivity() {
 
-    private val basket: Basket = Basket.getInstance()
+    private var basket = mutableStateOf(Basket.getInstance())
 
     // number of items in the basket
-    private var itemCount = mutableStateOf(basket.getItems().size)
+    private var itemCount = mutableStateOf(basket.value.getItems().size)
 
     // if item from another restaurant is added
     private val showErrorDialog =  mutableStateOf(false)
@@ -73,6 +74,9 @@ class ResDetails : ComponentActivity() {
 
         val sharedPreferences = this.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
+
+        basket.value = Gson().fromJson(sharedPreferences.getString("basket", Gson().toJson(basket.value)) ?: Gson().toJson(basket.value), Basket::class.java)
+        itemCount.value = basket.value.getItems().size
 
         setContent {
             // parse the menu data
@@ -110,13 +114,16 @@ class ResDetails : ComponentActivity() {
                                         // the menu items
                                         for (item in menu) {
                                             ItemCard(item=item, onClick = {
-                                                val addItemResult = basket.addItem(item, restaurantId)
+                                                val addItemResult = basket.value.addItem(item, restaurantId)
 
                                                 if (addItemResult) {
                                                     // Item added successfully
-                                                    itemCount.value = basket.getItems().size
-                                                    val returnIntent = Intent()
-                                                    setResult(Activity.RESULT_OK, returnIntent)
+                                                    itemCount.value = basket.value.getItems().size
+                                                    editor.putString("basket", Gson().toJson(basket.value))
+                                                    editor.apply()
+
+//                                                    val returnIntent = Intent()
+//                                                    setResult(Activity.RESULT_OK, returnIntent)
                                                 } else {
                                                     // Show dialog indicating that the item cannot be added
                                                     showErrorDialog.value = true
@@ -131,7 +138,7 @@ class ResDetails : ComponentActivity() {
                             // if the basket exists
                             if (itemCount.value > 0) {
                                 // this button has a fixed position and is always at the bottom
-                                ViewBasketButton(itemCount = itemCount.value, total = basket.getTotal(), startBasketActivityForResult)
+                                ViewBasketButton(itemCount = basket.value.getItems().size, total = basket.value.getTotal(), startBasketActivityForResult)
                             }
                         }
 
@@ -144,6 +151,13 @@ class ResDetails : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        val sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+        basket.value = Gson().fromJson(sharedPreferences.getString("basket", Gson().toJson(basket.value)) ?: Gson().toJson(basket.value), Basket::class.java)
     }
 
 }

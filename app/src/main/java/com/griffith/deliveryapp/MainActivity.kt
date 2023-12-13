@@ -20,6 +20,7 @@ import android.location.LocationManager
 import android.location.LocationRequest
 import android.os.Bundle
 import android.preference.PreferenceManager
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -75,6 +76,7 @@ import androidx.core.content.getSystemService
 import com.google.android.gms.common.api.GoogleApi.Settings
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.gson.Gson
 import com.griffith.deliveryapp.ui.theme.DeliveryAppTheme
 import java.io.Serializable
 import java.lang.StringBuilder
@@ -90,14 +92,14 @@ private lateinit var database: SQLiteDatabase
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
 
-    private val basket: Basket = Basket.getInstance()
+    private var basket = mutableStateOf(Basket.getInstance())
 
     private var isLocationInitialized = false
     // current coordinates
     private val coordinates: Coordinates = Coordinates.getInstance()
 
     // number of items in the basket
-    private val itemCount = mutableStateOf(basket.getItems().size)
+//    private val itemCount = mutableStateOf(basket.getItems().size)
 
     // to filter restaurants
     private val restaurantList = mutableStateOf(data)
@@ -144,7 +146,7 @@ class MainActivity : ComponentActivity() {
             if (result.resultCode == Activity.RESULT_OK) {
                 // Retrieve the updated item count from the basket
                 val itemCount = Basket.getInstance().getItems().size
-                this.itemCount.value = itemCount
+//                this.itemCount.value = itemCount
             }
         }
 
@@ -180,6 +182,7 @@ class MainActivity : ComponentActivity() {
         observedUsername.value = sharedPreferences.getString("username", "Guest") ?: "Guest"
         userLatitude.value = sharedPreferences.getFloat("userLatitude", 0.0f) ?: 0.0f
         userLongitude.value = sharedPreferences.getFloat("userLongitude", 0.0f) ?: 0.0f
+        basket.value = Gson().fromJson(sharedPreferences.getString("basket", Gson().toJson(basket.value)) ?: Gson().toJson(basket.value), Basket::class.java)
 
         myLocationManager = MyLocationManager(this, locationPermissionLauncher)
 
@@ -368,7 +371,7 @@ class MainActivity : ComponentActivity() {
                                                 )
 
                                                 // start the restaurant activity (ResDetails)
-                                                startActivityForItemCountResult.launch(intent)
+                                                startActivity(intent)
                                             })
                                             Spacer(modifier = Modifier.height(16.dp))
                                         }
@@ -378,11 +381,11 @@ class MainActivity : ComponentActivity() {
                         }
 
                         // if the basket exists
-                        if (itemCount.value > 0) {
+                        if (basket.value.getItems().size > 0) {
                             // this button has a fixed position and is always at the bottom
                             ViewBasketButton(
-                                itemCount = itemCount.value,
-                                total = basket.getTotal(),
+                                itemCount = basket.value.getItems().size,
+                                total = basket.value.getTotal(),
                                 startActivityForItemCountResult
                             )
                         }
@@ -426,6 +429,7 @@ class MainActivity : ComponentActivity() {
         observedUsername.value = sharedPreferences.getString("username", "Guest") ?: "Guest"
         userLatitude.value = sharedPreferences.getFloat("userLatitude", 0.0f) ?: 0.0f
         userLongitude.value = sharedPreferences.getFloat("userLongitude", 0.0f) ?: 0.0f
+        basket.value = Gson().fromJson(sharedPreferences.getString("basket", Gson().toJson(basket.value)) ?: Gson().toJson(basket.value), Basket::class.java)
 
         temperatureSensor?.let {
             sensorManager.registerListener(
