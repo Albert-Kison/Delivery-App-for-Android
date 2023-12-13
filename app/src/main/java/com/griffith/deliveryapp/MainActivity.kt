@@ -94,7 +94,7 @@ class MainActivity : ComponentActivity() {
 
     private var basket = mutableStateOf(Basket.getInstance())
 
-    private var isLocationInitialized = false
+    private var isLocationInitialized = mutableStateOf(false)
     // current coordinates
     private val coordinates: Coordinates = Coordinates.getInstance()
 
@@ -178,6 +178,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+
         // Observe changes in the username from shared preferences
         observedUsername.value = sharedPreferences.getString("username", "Guest") ?: "Guest"
         userLatitude.value = sharedPreferences.getFloat("userLatitude", 0.0f) ?: 0.0f
@@ -191,7 +193,7 @@ class MainActivity : ComponentActivity() {
             intent?.getBooleanExtra("skipLocationInitialization", false) ?: false
 
         // if location not initialised, do so
-        if (!isLocationInitialized && !skipLocationInitialization) {
+        if (!isLocationInitialized.value && !skipLocationInitialization) {
             initializeLocation()
         }
 
@@ -217,10 +219,15 @@ class MainActivity : ComponentActivity() {
             }
 
             // set the coordinates
-            myLocationManager.getCoordinates { latitude, longitude ->
-                coordinates.setLatitude(latitude)
-                coordinates.setLongitude(longitude)
-            }
+//            myLocationManager.getCoordinates { latitude, longitude ->
+//                userLatitude.value = latitude.toFloat()
+//                userLongitude.value = longitude.toFloat()
+//
+//                editor.putFloat("userLatitude", userLatitude.value)
+//                editor.putFloat("userLongitude", userLongitude.value)
+//
+//                editor.apply()
+//            }
 
 
             DeliveryAppTheme {
@@ -237,7 +244,7 @@ class MainActivity : ComponentActivity() {
 
                             // greet the user
                             Text(
-                                text = "Hello ${observedUsername.value}",
+                                text = "Hello, ${observedUsername.value.take(20).ifEmpty { "Guest" }}${if (observedUsername.value.length > 20) "..." else ""}",
                                 modifier = Modifier.padding(16.dp, 0.dp, 0.dp, 0.dp),
                                 fontSize = 20.sp
                             )
@@ -274,8 +281,8 @@ class MainActivity : ComponentActivity() {
                                 searchText.value = it
                                 searchAndFilterRestaurants(
                                     it,
-                                    coordinates.getLatitude(),
-                                    coordinates.getLongitude()
+                                    userLatitude.value.toDouble(),
+                                    userLongitude.value.toDouble()
                                 )
                             },
                             textStyle = TextStyle(fontSize = 24.sp),
@@ -308,12 +315,12 @@ class MainActivity : ComponentActivity() {
 //                        val a = coordinates.getLatitude()
 //                        val b = coordinates.getLongitude()
 
-                        Text(appData.value)
-                        Text(userLatitude.value.toString())
-                        Text(userLongitude.value.toString())
+//                        Text(text = userLatitude.value.toString())
+//                        Text(text = userLongitude.value.toString())
+//                        Text(text = isLocationInitialized.value.toString())
 
 
-                        if (!isLocationInitialized && !skipLocationInitialization) {
+                        if (!isLocationInitialized.value && !skipLocationInitialization) {
 
                             // show loading... if location is initialising
                             Box(
@@ -560,11 +567,19 @@ class MainActivity : ComponentActivity() {
 
 
     private fun initializeLocation() {
+        val sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+        
         myLocationManager.getCoordinates { latitude, longitude ->
-            isLocationInitialized = true
+            isLocationInitialized.value = true
 
             userLatitude.value = latitude.toFloat()
             userLongitude.value = longitude.toFloat()
+
+            editor.putFloat("userLatitude", userLatitude.value)
+            editor.putFloat("userLongitude", userLongitude.value)
+
+            editor.apply()
 
             // Filter restaurants based on distance
             filterRestaurantsBasedOnCoordinates(userLatitude.value, userLongitude.value)
@@ -666,13 +681,13 @@ class MainActivity : ComponentActivity() {
                     }
 
                     // calculate delivery time of the restaurant
-                    val deliveryTime = calculateDeliveryTime(coordinates.getLatitude(), coordinates.getLongitude(), res["latitude"] as Double, res["longitude"] as Double)
+                    val deliveryTime = calculateDeliveryTime(userLatitude.value.toDouble(), userLongitude.value.toDouble(), res["latitude"] as Double, res["longitude"] as Double)
                     Text(text = "Delivery time $deliveryTime minutes", color = Color.Gray)
 
                     // calculate distance away of the restaurant
                     var distanceAway = calculateDistance(
-                        coordinates.getLatitude(),
-                        coordinates.getLongitude(),
+                        userLatitude.value.toDouble(),
+                        userLongitude.value.toDouble(),
                         res["latitude"] as Double,
                         res["longitude"] as Double
                     ) / 1000

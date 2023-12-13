@@ -132,16 +132,17 @@ class BasketActivity : ComponentActivity() {
                                             basket.value.clearBasket()
                                             val intent = Intent(context, MainActivity::class.java) // Create the intent
 
-                                            intent.putExtra("skipLocationInitialization", true)
-                                            val userLatitude = coordinates.getLatitude()
-                                            val userLongitude = coordinates.getLongitude()
-
-                                            intent.putExtra("userLatitude", userLatitude)
-                                            intent.putExtra("userLongitude", userLongitude)
-                                            startActivity(intent)
-
                                             editor.putString("basket", Gson().toJson(basket.value))
                                             editor.apply()
+
+                                            intent.putExtra("skipLocationInitialization", true)
+//                                            val userLatitude = coordinates.getLatitude()
+//                                            val userLongitude = coordinates.getLongitude()
+//
+//                                            intent.putExtra("userLatitude", userLatitude)
+//                                            intent.putExtra("userLongitude", userLongitude)
+                                            startActivity(intent)
+
                                         }
                                 ) {
                                     Text(

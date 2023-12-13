@@ -57,19 +57,24 @@ import com.griffith.deliveryapp.ui.theme.DeliveryAppTheme
 class SettingsActivity : ComponentActivity() {
 
     private val coordinates: Coordinates = Coordinates.getInstance()
+    val userLatitude = mutableStateOf(0.0f)
+    val userLongitude = mutableStateOf(0.0f)
 
     private lateinit var myLocationManager: MyLocationManager
-
-    // get current location to display on the map
-    private val currentLocation = LatLng(coordinates.getLatitude(), coordinates.getLongitude())
-    // position marker
-    private val currentLocationState = mutableStateOf(MarkerState(position = currentLocation))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         val sharedPreferences = this.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
+
+        userLatitude.value = sharedPreferences.getFloat("userLatitude", 0.0f) ?: 0.0f
+        userLongitude.value = sharedPreferences.getFloat("userLongitude", 0.0f) ?: 0.0f
+
+        // get current location to display on the map
+        val currentLocation = LatLng(userLatitude.value.toDouble(), userLongitude.value.toDouble())
+        // position marker
+        val currentLocationState = mutableStateOf(MarkerState(position = currentLocation))
 
         // get current username to put it into the text field
 //        val currentUsername by lazy {
@@ -130,8 +135,13 @@ class SettingsActivity : ComponentActivity() {
                                 cameraPositionState = cameraPositionState,
                                 onMapClick = ({
                                     // update the coordinates
-                                    coordinates.setLatitude(it.latitude)
-                                    coordinates.setLongitude(it.longitude)
+                                    userLatitude.value = it.latitude.toFloat()
+                                    userLongitude.value = it.longitude.toFloat()
+
+                                    editor.putFloat("userLatitude", userLatitude.value)
+                                    editor.putFloat("userLongitude", userLongitude.value)
+
+                                    editor.apply()
 
                                     // position the marker on the new location
                                     currentLocationState.value = MarkerState(position = it)
