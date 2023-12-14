@@ -1,13 +1,8 @@
 package com.griffith.deliveryapp
 
 import MyLocationManager
-import android.Manifest
-import android.annotation.SuppressLint
-import android.app.Activity
-import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.hardware.Sensor
@@ -15,18 +10,11 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.location.Location
-import android.location.LocationListener
-import android.location.LocationManager
-import android.location.LocationRequest
 import android.os.Bundle
-import android.preference.PreferenceManager
-import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,7 +30,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
@@ -58,7 +45,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -70,12 +56,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import androidx.core.content.getSystemService
-import com.google.android.gms.common.api.GoogleApi.Settings
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
 import com.google.gson.Gson
 import com.griffith.deliveryapp.ui.theme.DeliveryAppTheme
 import java.io.Serializable
@@ -85,9 +65,6 @@ import kotlin.math.roundToInt
 
 // text used to search for restaurants (not implemented yet)
 var searchText = mutableStateOf("")
-private var appData = mutableStateOf("Empty database")
-private lateinit var databaseManager: DatabaseManager
-private lateinit var database: SQLiteDatabase
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
@@ -131,22 +108,28 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    val observedUsername = mutableStateOf("Guest")
-    val userLatitude = mutableStateOf(0.0f)
-    val userLongitude = mutableStateOf(0.0f)
+    // username with default value Guest
+    private val username = mutableStateOf("Guest")
+    // user's coordinates
+    private val userLatitude = mutableStateOf(0.0f)
+    private val userLongitude = mutableStateOf(0.0f)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // create sharedPreferences and get access to local storage
         val sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
 
-        // Observe changes in the username from shared preferences
-        observedUsername.value = sharedPreferences.getString("username", "Guest") ?: "Guest"
+        // get username from local storage
+        username.value = sharedPreferences.getString("username", "Guest") ?: "Guest"
+        // get user's coordinates from local storage
         userLatitude.value = sharedPreferences.getFloat("userLatitude", 0.0f) ?: 0.0f
         userLongitude.value = sharedPreferences.getFloat("userLongitude", 0.0f) ?: 0.0f
+        // get user's basket from local storage
         basket.value = Gson().fromJson(sharedPreferences.getString("basket", Gson().toJson(basket.value)) ?: Gson().toJson(basket.value), Basket::class.java)
 
+        // location manager to get the last known location
         myLocationManager = MyLocationManager(this, locationPermissionLauncher)
 
         // Check if the intent contains the flag to skip location initialization
@@ -158,14 +141,11 @@ class MainActivity : ComponentActivity() {
             initializeLocation()
         }
 
-        // get the coordinates from another activity
-//        val userLatitude = intent.getDoubleExtra("userLatitude", 0.0)
-//        val userLongitude = intent.getDoubleExtra("userLongitude", 0.0)
-
         // filter the restaurants
         filterRestaurantsBasedOnCoordinates(userLatitude.value, userLongitude.value)
 
         setContent {
+            // get local context
             val context = LocalContext.current
 
             // get the temperature sensor and register the listener
@@ -178,17 +158,6 @@ class MainActivity : ComponentActivity() {
                     SensorManager.SENSOR_DELAY_NORMAL
                 )
             }
-
-            // set the coordinates
-//            myLocationManager.getCoordinates { latitude, longitude ->
-//                userLatitude.value = latitude.toFloat()
-//                userLongitude.value = longitude.toFloat()
-//
-//                editor.putFloat("userLatitude", userLatitude.value)
-//                editor.putFloat("userLongitude", userLongitude.value)
-//
-//                editor.apply()
-//            }
 
 
             DeliveryAppTheme {
@@ -205,7 +174,7 @@ class MainActivity : ComponentActivity() {
 
                             // greet the user
                             Text(
-                                text = "Hello, ${observedUsername.value.take(20).ifEmpty { "Guest" }}${if (observedUsername.value.length > 20) "..." else ""}",
+                                text = "Hello, ${username.value.take(20).ifEmpty { "Guest" }}${if (username.value.length > 20) "..." else ""}",
                                 modifier = Modifier.padding(16.dp, 0.dp, 0.dp, 0.dp),
                                 fontSize = 20.sp
                             )
@@ -225,8 +194,8 @@ class MainActivity : ComponentActivity() {
                                     focusedElevation = 0.dp
                                 ),
                                 onClick = {
+                                    // go to settings activity when clicked
                                     val intent = Intent(context, SettingsActivity::class.java)
-//                                    intent.putExtra("username", username.value)
                                     startActivity(intent)
                                 },
                             ) {
@@ -272,15 +241,7 @@ class MainActivity : ComponentActivity() {
                                 .fillMaxWidth()
                         )
 
-
-//                        val a = coordinates.getLatitude()
-//                        val b = coordinates.getLongitude()
-
-//                        Text(text = userLatitude.value.toString())
-//                        Text(text = userLongitude.value.toString())
-//                        Text(text = isLocationInitialized.value.toString())
-
-
+                        // if the location is loading
                         if (!isLocationInitialized.value && !skipLocationInitialization) {
 
                             // show loading... if location is initialising
@@ -355,6 +316,7 @@ class MainActivity : ComponentActivity() {
                                 itemCount = basket.value.getItems().size,
                                 total = basket.value.getTotal(),
                                 onClick = {
+                                    // go to basket activity when clicked
                                     val intent = Intent(context, BasketActivity::class.java) // Create the intent
                                     startActivity(intent)
                                 }
@@ -365,9 +327,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-
-        databaseManager = DatabaseManager(this, "appValues.db", null, 1)
-        database = databaseManager.writableDatabase
 
     }
 
@@ -395,13 +354,17 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
 
+        // get access to local storage
         val sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
-        // Observe changes in the username from shared preferences
-        observedUsername.value = sharedPreferences.getString("username", "Guest") ?: "Guest"
+        // get username from local storage
+        username.value = sharedPreferences.getString("username", "Guest") ?: "Guest"
+        // get user's coordinates from local storage
         userLatitude.value = sharedPreferences.getFloat("userLatitude", 0.0f) ?: 0.0f
         userLongitude.value = sharedPreferences.getFloat("userLongitude", 0.0f) ?: 0.0f
+        // get user's basket from local storage
         basket.value = Gson().fromJson(sharedPreferences.getString("basket", Gson().toJson(basket.value)) ?: Gson().toJson(basket.value), Basket::class.java)
 
+        // register listener on the temperature sensor
         temperatureSensor?.let {
             sensorManager.registerListener(
                 sensorEventListener,
@@ -416,55 +379,16 @@ class MainActivity : ComponentActivity() {
         if (!skipLocationInitialization) {
             updateLocationAndFilterRestaurants()
         }
-
-        appData.value = retrieveAppData()
     }
 
     override fun onPause() {
         super.onPause()
 
+        // unregister listener on the temperature sensor
         temperatureSensor?.let {
             sensorManager.unregisterListener(sensorEventListener)
         }
-
-//        addAppData()
-//        updateAppData()
     }
-
-    private fun retrieveAppData(): String {
-        val table = "AppValues"
-        val columns: Array<String> = arrayOf("Id", "Name", "Value")
-        val cursor: Cursor = database.query(table, columns, null, null, null, null, null)
-
-        var result: StringBuilder = StringBuilder()
-        cursor.moveToFirst()
-        for (i in 0 until cursor.count) {
-            result.append(cursor.getInt(0).toString() + " ")
-            result.append(cursor.getString(1).toString() + " ")
-            result.append(cursor.getString(2).toString() + "\n")
-        }
-        return result.toString()
-    }
-
-//    private fun addAppData() {
-//        val row: ContentValues = ContentValues().apply {
-//            put("Name", "ItemCount")
-//            put("Value", itemCount.value.toString())
-//        }
-//
-//        database.insert("AppData", null, row)
-//    }
-
-//    private fun updateAppData() {
-//        val row: ContentValues = ContentValues().apply {
-//            put("Value", itemCount.value.toString())
-//        }
-//        val table = "AppData"
-//        val where = "Value ="
-//        val whereArgs: Array<String> = arrayOf("ItemCount")
-//
-//        database.update(table, row, where, whereArgs)
-//    }
 
     // search restaurants by name and based on the delivery address
     private fun searchAndFilterRestaurants(query: String, latitude: Double, longitude: Double) {
@@ -531,15 +455,18 @@ class MainActivity : ComponentActivity() {
 
 
     private fun initializeLocation() {
+        // get access to local storage
         val sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
-        
+
+        // get coordinates from MyLocationManager
         myLocationManager.getCoordinates { latitude, longitude ->
             isLocationInitialized.value = true
 
             userLatitude.value = latitude.toFloat()
             userLongitude.value = longitude.toFloat()
 
+            // save the coordinates to local storage
             editor.putFloat("userLatitude", userLatitude.value)
             editor.putFloat("userLongitude", userLongitude.value)
 
@@ -574,27 +501,7 @@ class MainActivity : ComponentActivity() {
     }
 
 
-//        override fun onRequestPermissionsResult(
-//        requestCode: Int,
-//        permissions: Array<out String>,
-//        grantResults: IntArray
-//    ) {
-//        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-//
-//        when (requestCode) {
-//            MY_PERMISSIONS_REQUEST_LOCATION -> {
-//                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//                    // Permission granted, proceed with GPS-related code
-//                    initializeLocation()
-//                } else {
-//                    // Permission denied, handle accordingly (e.g., show a message to the user)
-//                }
-//            }
-//        }
-//    }
-
-
-
+    // card to display a restaurant
     @Composable
     fun ResCard(res: Map<String, Any>, onClick: () -> Unit) {
         // the card has elevation and is clickable

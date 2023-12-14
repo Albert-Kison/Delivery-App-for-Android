@@ -48,8 +48,6 @@ import java.math.RoundingMode
 class BasketActivity : ComponentActivity() {
     private var basket = mutableStateOf(Basket.getInstance())
 
-    private val coordinates: Coordinates = Coordinates.getInstance()
-
     // number of items in the basket
     private var itemCount = mutableStateOf(basket.value.getItems().size)
 
@@ -57,14 +55,18 @@ class BasketActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // get access to local storage
         val sharedPreferences = this.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
 
+        // get basket from local storage
         basket.value = Gson().fromJson(sharedPreferences.getString("basket", Gson().toJson(basket.value)) ?: Gson().toJson(basket.value), Basket::class.java)
+        // update the itemCount
         itemCount.value = basket.value.getItems().size
 
         setContent {
             val context = LocalContext.current
+
             DeliveryAppTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
@@ -103,16 +105,12 @@ class BasketActivity : ComponentActivity() {
 
                                         // the items
                                         BasketItems(basket.value, onItemRemoved = {
+                                            // update the itemCount when removed
                                             itemCount.value = basket.value.getItems().size
 
+                                            // save the basket to local storage
                                             editor.putString("basket", Gson().toJson(basket.value))
                                             editor.apply()
-
-                                            // save the result when an item is deleted
-//                                            val returnIntent = Intent().apply {
-//                                                putExtra("itemCount", basket.getItems().size)
-//                                            }
-//                                            setResult(Activity.RESULT_OK, returnIntent)
                                         })
                                     }
                                 }
@@ -129,18 +127,18 @@ class BasketActivity : ComponentActivity() {
                                         .background(Color(238, 150, 75))
                                         .fillMaxWidth()
                                         .clickable {
+                                            // clear the basket when clicked
                                             basket.value.clearBasket()
-                                            val intent = Intent(context, MainActivity::class.java) // Create the intent
 
+                                            // go to main activity
+                                            val intent = Intent(context, MainActivity::class.java)
+
+                                            // save the basket to local storage
                                             editor.putString("basket", Gson().toJson(basket.value))
                                             editor.apply()
 
                                             intent.putExtra("skipLocationInitialization", true)
-//                                            val userLatitude = coordinates.getLatitude()
-//                                            val userLongitude = coordinates.getLongitude()
-//
-//                                            intent.putExtra("userLatitude", userLatitude)
-//                                            intent.putExtra("userLongitude", userLongitude)
+
                                             startActivity(intent)
 
                                         }
@@ -164,7 +162,9 @@ class BasketActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
 
+        // get access to local storage
         val sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+        // get basket from local storage
         basket.value = Gson().fromJson(sharedPreferences.getString("basket", Gson().toJson(basket.value)) ?: Gson().toJson(basket.value), Basket::class.java)
     }
 }

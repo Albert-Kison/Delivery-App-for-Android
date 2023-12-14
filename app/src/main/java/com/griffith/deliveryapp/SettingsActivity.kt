@@ -56,18 +56,18 @@ import com.griffith.deliveryapp.ui.theme.DeliveryAppTheme
 @OptIn(ExperimentalMaterial3Api::class)
 class SettingsActivity : ComponentActivity() {
 
-    private val coordinates: Coordinates = Coordinates.getInstance()
-    val userLatitude = mutableStateOf(0.0f)
-    val userLongitude = mutableStateOf(0.0f)
-
-    private lateinit var myLocationManager: MyLocationManager
+    // user's coordinates
+    private val userLatitude = mutableStateOf(0.0f)
+    private val userLongitude = mutableStateOf(0.0f)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // get access to local storage
         val sharedPreferences = this.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
 
+        // get the coordinates from local storage
         userLatitude.value = sharedPreferences.getFloat("userLatitude", 0.0f) ?: 0.0f
         userLongitude.value = sharedPreferences.getFloat("userLongitude", 0.0f) ?: 0.0f
 
@@ -76,10 +76,7 @@ class SettingsActivity : ComponentActivity() {
         // position marker
         val currentLocationState = mutableStateOf(MarkerState(position = currentLocation))
 
-        // get current username to put it into the text field
-//        val currentUsername by lazy {
-//            intent?.getStringExtra("username") ?: ""
-//        }
+        // get the username from local storage
         val usernameText = mutableStateOf(sharedPreferences.getString("username", "Guest") ?: "Guest")
 
         setContent {
@@ -134,10 +131,11 @@ class SettingsActivity : ComponentActivity() {
                                     .height(200.dp),
                                 cameraPositionState = cameraPositionState,
                                 onMapClick = ({
-                                    // update the coordinates
+                                    // update the coordinates when clicked
                                     userLatitude.value = it.latitude.toFloat()
                                     userLongitude.value = it.longitude.toFloat()
 
+                                    // save the coordinates
                                     editor.putFloat("userLatitude", userLatitude.value)
                                     editor.putFloat("userLongitude", userLongitude.value)
 
@@ -165,21 +163,11 @@ class SettingsActivity : ComponentActivity() {
                                 .clickable {
                                     val intent = Intent()
 
-                                    // put updated username
-                                    intent.putExtra("newUsername", usernameText.value)
+                                    // save the username to local storage
                                     editor.putString("username", usernameText.value)
 
-                                    // put updated coordinates
-                                    intent.putExtra(
-                                        "newLatitude",
-                                        currentLocationState.value.position.latitude
-                                    )
+                                    // save the coordinates to local storage
                                     editor.putFloat("userLatitude", currentLocationState.value.position.latitude.toFloat())
-
-                                    intent.putExtra(
-                                        "newLongitude",
-                                        currentLocationState.value.position.longitude
-                                    )
                                     editor.putFloat("userLongitude", currentLocationState.value.position.longitude.toFloat())
 
                                     intent.putExtra("skipLocationInitialization", true)

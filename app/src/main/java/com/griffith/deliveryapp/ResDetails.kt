@@ -60,23 +60,17 @@ class ResDetails : ComponentActivity() {
     // if item from another restaurant is added
     private val showErrorDialog =  mutableStateOf(false)
 
-    // save the itemCount if modified in another activity
-    private val startBasketActivityForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            // Retrieve the updated item count from the basket
-            val itemCount = Basket.getInstance().getItems().size
-            this.itemCount.value = itemCount
-        }
-    }
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // get access to local storage
         val sharedPreferences = this.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
 
+        // get basket from local storage
         basket.value = Gson().fromJson(sharedPreferences.getString("basket", Gson().toJson(basket.value)) ?: Gson().toJson(basket.value), Basket::class.java)
+        // update itemCount
         itemCount.value = basket.value.getItems().size
 
         setContent {
@@ -121,12 +115,12 @@ class ResDetails : ComponentActivity() {
 
                                                 if (addItemResult) {
                                                     // Item added successfully
+                                                    // update the itemCount
                                                     itemCount.value = basket.value.getItems().size
+
+                                                    // save basket to local storage
                                                     editor.putString("basket", Gson().toJson(basket.value))
                                                     editor.apply()
-
-//                                                    val returnIntent = Intent()
-//                                                    setResult(Activity.RESULT_OK, returnIntent)
                                                 } else {
                                                     // Show dialog indicating that the item cannot be added
                                                     showErrorDialog.value = true
@@ -142,7 +136,8 @@ class ResDetails : ComponentActivity() {
                             if (itemCount.value > 0) {
                                 // this button has a fixed position and is always at the bottom
                                 ViewBasketButton(itemCount = basket.value.getItems().size, total = basket.value.getTotal(), onClick = {
-                                    val intent = Intent(context, BasketActivity::class.java) // Create the intent
+                                    // if clicked go to basket activity
+                                    val intent = Intent(context, BasketActivity::class.java)
                                     startActivity(intent)
                                 })
                             }
@@ -162,7 +157,9 @@ class ResDetails : ComponentActivity() {
     override fun onResume() {
         super.onResume()
 
+        // get access to local storage
         val sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+        // get the basket from local storage
         basket.value = Gson().fromJson(sharedPreferences.getString("basket", Gson().toJson(basket.value)) ?: Gson().toJson(basket.value), Basket::class.java)
     }
 
