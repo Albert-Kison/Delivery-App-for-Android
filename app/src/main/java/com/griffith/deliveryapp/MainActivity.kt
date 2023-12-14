@@ -63,7 +63,7 @@ import java.lang.StringBuilder
 import kotlin.math.roundToInt
 
 
-// text used to search for restaurants (not implemented yet)
+// text used to search for restaurants
 var searchText = mutableStateOf("")
 
 @OptIn(ExperimentalMaterial3Api::class)
