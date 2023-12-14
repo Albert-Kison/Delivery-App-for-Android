@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -79,6 +80,8 @@ class ResDetails : ComponentActivity() {
         itemCount.value = basket.value.getItems().size
 
         setContent {
+            val context = LocalContext.current
+
             // parse the menu data
             @Suppress("DEPRECATION")
             val menu: List<HashMap<String, Any>> = intent.getSerializableExtra("menu") as List<HashMap<String, Any>>
@@ -138,7 +141,10 @@ class ResDetails : ComponentActivity() {
                             // if the basket exists
                             if (itemCount.value > 0) {
                                 // this button has a fixed position and is always at the bottom
-                                ViewBasketButton(itemCount = basket.value.getItems().size, total = basket.value.getTotal(), startBasketActivityForResult)
+                                ViewBasketButton(itemCount = basket.value.getItems().size, total = basket.value.getTotal(), onClick = {
+                                    val intent = Intent(context, BasketActivity::class.java) // Create the intent
+                                    startActivity(intent)
+                                })
                             }
                         }
 
@@ -184,7 +190,8 @@ fun ItemCard(item: HashMap<String, Any>, onClick: () -> Unit) {
                 Text(text = item["foodName"] as String ?: "Menu Item", fontWeight = FontWeight.SemiBold, fontSize = 20.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
 
                 // the item's description
-                Text(text = item["foodDescription"] as String ?: "Description", maxLines = 2, fontSize = 16.sp, overflow = TextOverflow.Ellipsis, style = TextStyle(lineHeight = 18.sp))
+                val foodDescription = item["foodDescription"] as String ?: "Description"
+                Text(text = "${foodDescription.take(60).ifEmpty { "Description" }}${if (foodDescription.length > 60) "..." else ""}", maxLines = 2, fontSize = 16.sp, overflow = TextOverflow.Ellipsis, style = TextStyle(lineHeight = 18.sp))
 
                 // the item's price
                 Text(text = (item["foodPrice"].toString() + "€") ?: "Price")

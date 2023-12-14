@@ -14,19 +14,19 @@ val data = listOf(
             hashMapOf(
                 "foodName" to "Burger",
                 "foodImg" to R.drawable.burger,
-                "foodDescription" to "ioerg eorijg eoirgj eoijeo",
+                "foodDescription" to "Get yourself down to the steakhouse",
                 "foodPrice" to 16.99
             ),
             hashMapOf(
                 "foodName" to "Beef and Guinness",
                 "foodImg" to R.drawable.beef_and_guinness,
-                "foodDescription" to "ioerg eorijg eoirgj eoijeo",
+                "foodDescription" to "Experience the real irish kitchen",
                 "foodPrice" to 18.99
             ),
             hashMapOf(
                 "foodName" to "Fish and Chips",
                 "foodImg" to R.drawable.fish_and_chips,
-                "foodDescription" to "ioerg eorijg eoirgj eoijeo",
+                "foodDescription" to "Fish & Chips: Crispy, golden perfection",
                 "foodPrice" to 17.99
             )
         )
@@ -43,19 +43,19 @@ val data = listOf(
             hashMapOf(
                 "foodName" to "Big Mac",
                 "foodImg" to R.drawable.bigmac,
-                "foodDescription" to "ioerg eorijg eoirgj eoijeo",
+                "foodDescription" to "Irish beef, cheese, lettuce, onion",
                 "foodPrice" to 4.99
             ),
             hashMapOf(
                 "foodName" to "Big Tasty",
                 "foodImg" to R.drawable.bigtasty,
-                "foodDescription" to "ioerg eorijg eoirgj eoijeo",
+                "foodDescription" to "100% irish beef, tomatoes, sauce",
                 "foodPrice" to 5.99
             ),
             hashMapOf(
                 "foodName" to "Cheeseburger",
                 "foodImg" to R.drawable.cheeseburger,
-                "foodDescription" to "ioerg eorijg eoirgj eoijeo",
+                "foodDescription" to "Cheddar cheese, irish beef, and pickles",
                 "foodPrice" to 3.99
             )
         )
@@ -72,19 +72,19 @@ val data = listOf(
             hashMapOf(
                 "foodName" to "Pepperoni",
                 "foodImg" to R.drawable.pepperoni,
-                "foodDescription" to "ioerg eorijg eoirgj eoijeo",
+                "foodDescription" to "Pizza with cheese and pepperoni",
                 "foodPrice" to 20.99
             ),
             hashMapOf(
                 "foodName" to "Texas BBQ",
                 "foodImg" to R.drawable.texas_bbq,
-                "foodDescription" to "ioerg eorijg eoirgj eoijeo",
+                "foodDescription" to "BBQ sauce, onions, bacon, chicken",
                 "foodPrice" to 21.99
             ),
             hashMapOf(
                 "foodName" to "Vegi Supreme",
                 "foodImg" to R.drawable.vegi_supreme,
-                "foodDescription" to "ioerg eorijg eoirgj eoijeo",
+                "foodDescription" to "Vegetarian pizza",
                 "foodPrice" to 20.99
             )
         )

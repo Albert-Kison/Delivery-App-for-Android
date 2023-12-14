@@ -29,7 +29,7 @@ import java.math.RoundingMode
 // if clicked, to the basket
 // this button has a fixed position and is always at the bottom
 @Composable
-fun ViewBasketButton(itemCount: Int, total: Double, startBasketActivityForResult: ActivityResultLauncher<Intent>) {
+fun ViewBasketButton(itemCount: Int, total: Double, onClick: () -> Unit) {
     val context = LocalContext.current // Get the current context
 
     Box(
@@ -39,8 +39,7 @@ fun ViewBasketButton(itemCount: Int, total: Double, startBasketActivityForResult
             .fillMaxWidth()
             .clickable {
                 // go to the BasketActivity
-                val intent = Intent(context, BasketActivity::class.java) // Create the intent
-                startBasketActivityForResult.launch(intent)
+                onClick()
             }
     ) {
         Box(

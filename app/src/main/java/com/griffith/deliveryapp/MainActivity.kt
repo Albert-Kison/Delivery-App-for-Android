@@ -95,36 +95,9 @@ class MainActivity : ComponentActivity() {
     private var basket = mutableStateOf(Basket.getInstance())
 
     private var isLocationInitialized = mutableStateOf(false)
-    // current coordinates
-    private val coordinates: Coordinates = Coordinates.getInstance()
-
-    // number of items in the basket
-//    private val itemCount = mutableStateOf(basket.getItems().size)
 
     // to filter restaurants
     private val restaurantList = mutableStateOf(data)
-
-    // username to greet the user
-//    private val username = mutableStateOf("Guest")
-
-    // get new username and delivery address
-//    private val startSettingsActivityForResult =
-//        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-//            if (result.resultCode == Activity.RESULT_OK) {
-//                // Retrieve the updated username and location from the intent
-//                val newUsername = result.data?.getStringExtra("newUsername")
-//                val newLatitude = result.data?.getDoubleExtra("newLatitude", 0.0)
-//                val newLongitude = result.data?.getDoubleExtra("newLongitude", 0.0)
-//
-//                newUsername?.let {
-//                    // Update the username in MainActivity
-//                    username.value = it
-//                }
-//
-//                 Update location and filter restaurants when settings are updated
-//                filterRestaurantsBasedOnCoordinates(newLatitude ?: 0.0, newLongitude ?: 0.0)
-//            }
-//        }
 
     // request the location
     private val locationPermissionLauncher =
@@ -139,18 +112,6 @@ class MainActivity : ComponentActivity() {
         }
 
     private lateinit var myLocationManager: MyLocationManager
-
-    // save the itemCount if modified in another activity
-    private val startActivityForItemCountResult =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                // Retrieve the updated item count from the basket
-                val itemCount = Basket.getInstance().getItems().size
-//                this.itemCount.value = itemCount
-            }
-        }
-
-    private val MY_PERMISSIONS_REQUEST_LOCATION = 123
 
     // store the temperature from the sensor
     private var temperature = mutableStateOf(0f)
@@ -393,7 +354,10 @@ class MainActivity : ComponentActivity() {
                             ViewBasketButton(
                                 itemCount = basket.value.getItems().size,
                                 total = basket.value.getTotal(),
-                                startActivityForItemCountResult
+                                onClick = {
+                                    val intent = Intent(context, BasketActivity::class.java) // Create the intent
+                                    startActivity(intent)
+                                }
                             )
                         }
                     }
